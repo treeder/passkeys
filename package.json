@@ -1,0 +1,16 @@
+{
+  "name": "passkeys",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "app.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@simplewebauthn/server": "^10.0.1",
+    "api": "treeder/api",
+    "hono": "^4.6.3",
+    "nanoid": "^5.0.7",
+    "rend": "github:treeder/rend"
+  }
+}
