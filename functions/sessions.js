@@ -1,7 +1,7 @@
 import { parse, serialize } from "cookie-es"
 import { globals } from "./globals.js"
 import { nanoid } from "nanoid"
-import { hostname } from "./functions/utils.js"
+import { hostname } from "./utils.js"
 
 // currently active session cache
 const sessions = {}
@@ -14,10 +14,10 @@ export async function getSession(c) {
   //   key = c2.session
   // }
   let sessionID = c2.session
-  return await getSessionByID(sessionID)
+  return await getSessionByID(c, sessionID)
 }
 
-export async function getSessionByID(sessionID) {
+export async function getSessionByID(c, sessionID) {
   // console.log("get session cookie:", sessionID)
   if (!sessionID) {
     return {}
@@ -26,7 +26,7 @@ export async function getSessionByID(sessionID) {
   if (sessions[sessionID]) {
     return sessions[sessionID]
   }
-  let sessionData = await globals.kv.get(`session-${sessionID}`)
+  let sessionData = await c.data.kv.get(`session-${sessionID}`)
   // console.log("sessionData:", sessionData)
   if (!sessionData) {
     return {

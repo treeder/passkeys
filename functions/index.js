@@ -1,7 +1,7 @@
 import { html } from "rend"
 
 export async function onRequest(c) {
-  console.log("data:", c.data)
+  // console.log("data:", c.data)
   return c.data.rend.html({
     main: render,
     name: 'World',

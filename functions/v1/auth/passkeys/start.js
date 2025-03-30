@@ -1,6 +1,6 @@
 import { generateAuthenticationOptions } from "@simplewebauthn/server"
 import { hostname } from "../../../utils.js"
-import { updateSession } from "../../../../sessions.js"
+import { updateSession } from "../../../sessions.js"
 
 export async function onRequest(c) {
   console.log("in /signin/start")

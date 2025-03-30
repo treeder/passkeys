@@ -1,6 +1,5 @@
-import { getUserByEmail } from "../../../../auth.js"
-import { updateSession } from "../../../../sessions.js"
-import { globals } from "../../../globals.js"
+import { getUserByEmail } from "../../../auth.js"
+import { updateSession } from "../../../sessions.js"
 import { hostURL } from "../../../utils.js"
 
 export async function onRequest(c) {

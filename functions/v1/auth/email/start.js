@@ -9,15 +9,16 @@ export async function onRequest(c) {
     email: body.email,
   }), { expiration_ttl: 60 * 60 })
   let url = `${hostURL(c)}/v1/auth/email/verify?token=${token}`
-  let ebody = `Click here to sign in: <a href="${url}">${url}</a>`
+  let ebody = `<a href="${url}">Click here to sign in</a>`
   console.log("auth link:", url) // get the link from the console
   // THIS IS WHERE YOU'D SEND AN EMAIL
   // await sendEmail(c, body.email, "Sign into My App", ebody)
+  console.log("data;", c.data)
   if (c.data.mailer) {
-    await c.data.mailer.send({
+    await c.data.mailer.send(c, {
       to: body.email,
-      subject: "Sign into My App",
-      html: ebody,
+      subject: `Sign in to ${c.data.app?.name || "my app"}`,
+      body: ebody,
     })
   }
   return Response.json({ message: 'Check your email to continue.' })

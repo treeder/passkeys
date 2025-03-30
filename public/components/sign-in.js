@@ -2,10 +2,8 @@ import { html, css, LitElement } from 'lit'
 import 'material/button/filled-button.js'
 import 'material/textfield/filled-text-field.js'
 import { api } from 'api'
-// import { startRegistration } from 'https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@13/dist/bundle/index.umd.min.js'
 import { startRegistration, startAuthentication } from 'https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@13/esm/index.js'
-import { styles as sharedStyles } from '/css/styles.js'
-
+import { styles as sharedStyles } from '../css/styles.js'
 
 export class SignIn extends LitElement {
   static styles = [

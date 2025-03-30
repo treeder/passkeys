@@ -1,10 +1,10 @@
 import { generateAuthenticationOptions, verifyAuthenticationResponse } from "@simplewebauthn/server"
 import { hostname } from "../../../utils.js"
-import { getSession, updateSession } from "../../../../sessions.js"
 import { isoBase64URL } from "@simplewebauthn/server/helpers"
+import { getSession, updateSession } from "../../../sessions.js"
 
 export async function onRequest(c) {
-  const body = await c.request.json()
+  let body = await c.request.json()
   console.log("body:", body)
 
   // console.log("CRED RESPONSE:", body.credential.response)

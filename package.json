@@ -4,7 +4,7 @@
   "type": "module",
   "description": "",
   "main": "app.js",
-  "author": "",
+  "author": "@treeder",
   "license": "ISC",
   "dependencies": {
     "@simplewebauthn/server": "^13.0.1",
