@@ -24,7 +24,7 @@ export class SignIn extends LitElement {
     this.capable = false
 
     this.error = null
-    this.success = ''
+    this.success = null
 
   }
 
@@ -44,7 +44,7 @@ export class SignIn extends LitElement {
 
     if (!this.isLoggedIn()) {
       console.log("not logged in, starting conditional UI")
-      // this.signin2(true) // to start conditional UI
+      this.signin2(true) // to start conditional UI
     }
 
   }
@@ -60,7 +60,8 @@ export class SignIn extends LitElement {
     }
     if (this.success) {
       return html`<div class="success" style="margin-top: 40px;">
-            ${this.success}
+            ${this.success.message}
+            ${this.success.link ? html`<a href="${this.success.link}">Click to verify</a>` : ''}
             </div>`
     }
 
@@ -86,7 +87,7 @@ export class SignIn extends LitElement {
             ${err}
             <!-- <input type="text" id="email" autocomplete="webauthn"> -->
             <md-filled-text-field label="Email" type="email" id="email" @keyup=${this.keyUpHandler} required autocomplete="webauthn"></md-filled-text-field>
-            <md-filled-button @click=${this.continue}>Continue</md-filled-button>
+            <md-filled-button @click=${this.emailStart}>Continue</md-filled-button>
             <!-- <md-filled-button @click=${this.createPasskey}>Continue</md-filled-button> -->
             <div>
             <hr>
@@ -113,26 +114,26 @@ export class SignIn extends LitElement {
 
   keyUpHandler(e) {
     if (e.key === 'Enter') {
-      this.continue()
+      this.emailStart()
     }
   }
 
-  async continue() {
+  async emailStart() {
     console.log("continue")
     this.error = null
-    let usernameF = this.renderRoot.getElementById('email')
-    if (!usernameF.reportValidity()) {
+    let emailF = this.renderRoot.getElementById('email')
+    if (!emailF.reportValidity()) {
       return
     }
-    let username = usernameF.value
-    console.log("username:", username)
+    let email = emailF.value
+    console.log("email:", email)
     try {
       let r = await api(`/v1/auth/email/start`, {
         method: "POST",
-        body: { email: username },
+        body: { email: email },
       })
       console.log("r:", r)
-      this.success = r.message
+      this.success = r
     } catch (e) {
       console.log("e:", e)
       this.error = e
@@ -158,7 +159,11 @@ export class SignIn extends LitElement {
       console.log("challenge:", challenge)
 
       // Pass the options to the authenticator and wait for a response
-      let cred = await startAuthentication({ optionsJSON: challenge, useBrowserAutofill: conditionalUI, verifyBrowserAutofillInput: false })
+      let cred = await startAuthentication({
+        optionsJSON: challenge,
+        useBrowserAutofill: conditionalUI,
+        verifyBrowserAutofillInput: false
+      })
       console.log("CRED:", cred)
       // let userID = isoBase64URL.toUTF8String(cred.response.userhandle)
       console.log("USER ID FROM CRED, aka userHandle:", cred.response.userhandle)
@@ -173,7 +178,7 @@ export class SignIn extends LitElement {
       if (!r.verified) {
         this.error = { message: "Not verified" }
       } else {
-        this.success = "You signed in with a passkey!"
+        this.success = { message: "You signed in with a passkey!" }
       }
       window.location.href = '/'
     } catch (e) {
@@ -225,7 +230,7 @@ export class SignIn extends LitElement {
       if (!r.verified) {
         this.error = { message: "Not verified" }
       } else {
-        this.success = "Passkey created! Next time you can sign in with it."
+        this.success = { message: "Passkey created! Next time you can sign in with it." }
       }
     } catch (e) {
       console.log("e:", e)

@@ -9,10 +9,6 @@ const sessions = {}
 export async function getSession(c) {
   const cookie = c.request.headers.get('cookie') || ''
   let c2 = parse(cookie)
-  // console.log("cookie:", c2)
-  // if (c2.session) {
-  //   key = c2.session
-  // }
   let sessionID = c2.session
   return await getSessionByID(c, sessionID)
 }
@@ -64,27 +60,7 @@ async function putSession(c, sessionID, sessionData) {
     // httpOnly: true,
     maxAge: maxAge,
   })]
-  // const headers = new Headers({
-  //   "Set-Cookie": serialize('session', sessionID, {
-  //     path: '/',
-  //     secure: true,
-  //     // domain: 'example.com',
-  //     // httpOnly: true,
-  //     maxAge: maxAge,
-  //   })
-  // })
   if (sessionData.userID) {
-    // const headers = new Headers({
-    //   "Set-Cookie": "name1=value1",
-    // })
-
-    // setCookie(c, 'userID', sessionData.userID, {
-    //   path: '/',
-    //   secure: true,
-    //   // domain: 'example.com',
-    //   // httpOnly: true,
-    //   maxAge: maxAge,
-    // })
     cookies.push(serialize('userID', sessionData.userID, {
       path: '/',
       secure: true,

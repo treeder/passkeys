@@ -9,7 +9,7 @@ export async function onRequest(c) {
   c.data.d1 = new D1(c.env.D1)
   c.data.kv = c.env.KV
 
-  c.data.mailer = globals.mailer
+  // c.data.mailer = globals.mailer
 
   await auth(c)
 

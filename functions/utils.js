@@ -1,16 +1,15 @@
 export function hostname(c) {
   let req = c.request
-  let domain = req.headers.get('x-forwarded-host') || req.headers.get('host')
-  if (domain) {
-    domain = domain.split(':')[0]
-    domain = domain.split(':')[0] // remove port
+  let h = req.headers.get('x-forwarded-host') || req.headers.get('host')
+  if (h) {
+    h = h.split(':')[0]
+    h = h.split(':')[0] // remove port
   }
-  return domain
+  return h
 }
 
 export function hostURL(c) {
-  let domain = hostname(c)
-  domain = 'https://' + domain
-  // console.log('config domain', domain)
-  return domain
+  let h = hostname(c)
+  h = 'https://' + h
+  return h
 }

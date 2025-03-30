@@ -20,6 +20,12 @@ export async function onRequest(c) {
       subject: `Sign in to ${c.data.app?.name || "my app"}`,
       body: ebody,
     })
+    return Response.json({ message: 'Check your email to continue.' })
+  } else {
+    // send link back to client, for demo
+    return Response.json({
+      message: "Click link below to verify. This would normally be sent via email, but no mailer is setup.",
+      link: url,
+    })
   }
-  return Response.json({ message: 'Check your email to continue.' })
 }
