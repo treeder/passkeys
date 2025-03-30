@@ -14,6 +14,7 @@ export class SignIn extends LitElement {
   static properties = {
     capable: { type: Boolean },
     name: { type: String },
+    hasPasskey: { type: Boolean },
     error: { type: Object },
     success: { type: String },
   }
@@ -22,6 +23,7 @@ export class SignIn extends LitElement {
     super()
     this.name = 'Somebody'
     this.capable = false
+    this.hasPasskey = false
 
     this.error = null
     this.success = null
@@ -30,6 +32,7 @@ export class SignIn extends LitElement {
 
   connectedCallback() {
     super.connectedCallback()
+
     this.checkCapabilities()
 
   }
@@ -45,8 +48,23 @@ export class SignIn extends LitElement {
     if (!this.isLoggedIn()) {
       console.log("not logged in, starting conditional UI")
       this.signin2(true) // to start conditional UI
+    } else {
+      // see if we have a passkey
+      try {
+        let r = await api(`/v1/auth/passkeys/check`, {
+          method: "POST",
+          body: {},
+        })
+        console.log("r:", r)
+        if (r.passkey) {
+          // this.success = { message: "You already have a pass key!" }
+          this.hasPasskey = true
+        }
+      } catch (e) {
+        console.log("e:", e)
+        // this.error = e
+      }
     }
-
   }
 
 
@@ -70,10 +88,16 @@ export class SignIn extends LitElement {
       s = html`
           <div class="flex col g24 aic" style="min-width: 400px; padding-top: 40px;">
             ${err}
-            <md-filled-button @click=${this.createPasskey}>Create Passkey</md-filled-button>
+            ${this.hasPasskey ? html`
+              <div>You already have a passkey. <a href="/dashboard">Continue to dashboard</a>.</div>
+              `: html`
+            <div>
+              <md-filled-button @click=${this.createPasskey}>Create Passkey</md-filled-button>
+            </div>
             <div>
                 <a href="/dashboard">Skip this and create passkey later</a>
             </div>
+            `}
             <div>
               <md-filled-button @click=${this.signOut}>Sign out</md-filled-button>
             </div>
