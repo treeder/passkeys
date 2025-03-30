@@ -1,12 +1,19 @@
-import { getCookie, setCookie } from "hono/cookie"
+import { parse, serialize } from "cookie-es"
 import { globals } from "./globals.js"
 import { nanoid } from "nanoid"
+import { hostname } from "./functions/utils.js"
 
 // currently active session cache
 const sessions = {}
 
 export async function getSession(c) {
-  let sessionID = getCookie(c, 'session')
+  const cookie = c.request.headers.get('cookie') || ''
+  let c2 = parse(cookie)
+  // console.log("cookie:", c2)
+  // if (c2.session) {
+  //   key = c2.session
+  // }
+  let sessionID = c2.session
   return await getSessionByID(sessionID)
 }
 
@@ -37,7 +44,7 @@ export async function getSessionByID(sessionID) {
 export async function setSession(c, sessionData) {
   let sessionID = getCookie(c, 'session')
   console.log("set session sessionID:", sessionID)
-  await putSession(c, sessionID, sessionData)
+  return await putSession(c, sessionID, sessionData)
 }
 
 async function putSession(c, sessionID, sessionData) {
@@ -48,25 +55,47 @@ async function putSession(c, sessionID, sessionData) {
   let maxAge = 60 * 60 * 24 * 365
   let k = `session-${sessionID}`
   console.log("PUTTING SESSION:", k, sessionData)
-  await globals.kv.set(k, JSON.stringify(sessionData), { expiration_ttl: maxAge })
+  await c.data.kv.put(k, JSON.stringify(sessionData), { expiration_ttl: maxAge })
   sessions[sessionID] = sessionData
-  setCookie(c, 'session', sessionID, {
+  let cookies = [serialize('session', sessionID, {
     path: '/',
     secure: true,
-    // domain: 'example.com',
+    domain: hostname(c),
     // httpOnly: true,
     maxAge: maxAge,
-    // expires: new Date(Date.UTC(2000, 11, 24, 10, 30, 59, 900)),
-    // sameSite: 'Strict',
-  })
+  })]
+  // const headers = new Headers({
+  //   "Set-Cookie": serialize('session', sessionID, {
+  //     path: '/',
+  //     secure: true,
+  //     // domain: 'example.com',
+  //     // httpOnly: true,
+  //     maxAge: maxAge,
+  //   })
+  // })
   if (sessionData.userID) {
-    setCookie(c, 'userID', sessionData.userID, {
+    // const headers = new Headers({
+    //   "Set-Cookie": "name1=value1",
+    // })
+
+    // setCookie(c, 'userID', sessionData.userID, {
+    //   path: '/',
+    //   secure: true,
+    //   // domain: 'example.com',
+    //   // httpOnly: true,
+    //   maxAge: maxAge,
+    // })
+    cookies.push(serialize('userID', sessionData.userID, {
       path: '/',
       secure: true,
-      // domain: 'example.com',
+      domain: hostname(c),
       // httpOnly: true,
       maxAge: maxAge,
-    })
+    }))
+  }
+  return {
+    sessionID,
+    cookies,
   }
 }
 
@@ -74,6 +103,5 @@ async function putSession(c, sessionID, sessionData) {
 export async function updateSession(c, sessionData) {
   let session = await getSession(c)
   session = { ...session, ...sessionData }
-  await putSession(c, session.id, session)
-
+  return await putSession(c, session.id, session)
 }

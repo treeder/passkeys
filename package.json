@@ -7,9 +7,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@simplewebauthn/server": "^10.0.1",
+    "@simplewebauthn/server": "^13.0.1",
     "api": "treeder/api",
-    "hono": "^4.6.3",
+    "cookie-es": "^2.0.0",
+    "flaregun": "github:treeder/flaregun",
     "nanoid": "^5.0.7",
     "rend": "github:treeder/rend"
   }
