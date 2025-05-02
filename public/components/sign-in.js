@@ -61,7 +61,7 @@ export class SignIn extends LitElement {
           body: {},
         })
         console.log("r:", r)
-        if (r.passkey) {
+        if (r.numPasskeys > 0) {
           // this.success = { message: "You already have a pass key!" }
           this.hasPasskey = true
         }

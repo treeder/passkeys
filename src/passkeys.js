@@ -35,7 +35,9 @@ export class Passkeys {
     let userID = null
     if (this.opts.emailStart) {
       let ur = await this.opts.emailStart({ email: input.email })
-      userID = ur.userID
+      if (ur) {
+        userID = ur.userID
+      }
     }
     if (!userID) {
       userID = input.email // nanoid()
@@ -58,6 +60,10 @@ export class Passkeys {
         subject: `Sign in to ${this.opts.appName || "my app"}`,
         body: ebody,
       })
+      return Response.json({ message: 'Check your email to continue.' })
+    } else if (this.opts.emailSend) {
+      // callback to send your own email
+      await this.opts.emailSend({ userID, email: input.email, token, url })
       return Response.json({ message: 'Check your email to continue.' })
     } else {
       // send link back to client, for demo
@@ -189,8 +195,18 @@ export class Passkeys {
       // Whether the passkey has been backed up in some way
       backedUp: credentialBackedUp,
     }
-    console.log("storing at", `passkey-${newPasskey.id}`)
-    await this.opts.kv.put(`passkey-${newPasskey.id}`, JSON.stringify(newPasskey))
+    console.log("storing at", `passkeys-${newPasskey.id}`)
+    await this.opts.kv.put(`passkeys-${newPasskey.id}`, JSON.stringify(newPasskey))
+
+    // also store all passkeys for user to find them later
+    let user = {
+      id: userID,
+      email: sess.email,
+      passkeys: [
+        newPasskey,
+      ],
+    }
+    await this.opts.kv.put(`users-${userID}`, JSON.stringify(user))
 
     return Response.json({ verified: verification.verified })
   }
@@ -228,7 +244,7 @@ export class Passkeys {
     userID = isoBase64URL.toUTF8String(userID)
     this.opts.logger.log("userID 2:", userID)
 
-    let passkey = await this.opts.kv.get(`passkey-${input.credential.id}`)
+    let passkey = await this.opts.kv.get(`passkeys-${input.credential.id}`)
     if (!passkey) {
       throw new Error(`Could not find passkey for user ${this.opts.userID}`)
     }
@@ -267,7 +283,7 @@ export class Passkeys {
 
     // update counter
     shallowCopy.counter = verification.authenticationInfo.newCounter
-    await this.opts.kv.put(`passkey-${userID}`, JSON.stringify(shallowCopy))
+    await this.opts.kv.put(`passkeys-${passkey.id}`, JSON.stringify(shallowCopy))
 
     if (this.opts.passkeyVerified) {
       await this.opts.passkeyVerified({ userID, email: sess.email })
@@ -290,12 +306,12 @@ export class Passkeys {
     if (!sess) {
       throw new APIError(`Not logged in`, { status: 401 })
     }
-    let passkey = await this.opts.kv.get(`passkey-${sess.userID}`)
-    if (!passkey) {
+    let user = await this.opts.kv.get(`users-${sess.userID}`)
+    if (!user) {
       throw new APIError(`Could not find a passkey for user ${sess.userID}`, { status: 404 })
     }
-    passkey = JSON.parse(passkey)
-    this.opts.logger.log("passkey:", passkey)
-    return Response.json({ passkey })
+    user = JSON.parse(user)
+    this.opts.logger.log("user:", user)
+    return Response.json({ message: `${user.passkeys.length} passkeys found`, numPasskeys: user.passkeys.length })
   }
 }
