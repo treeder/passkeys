@@ -1,5 +1,5 @@
 export class ConsoleMailer {
-  async send(c, opts) {
+  async send(opts) {
     console.log(`THIS SHOULD BE REPLACED WITH A PROPER MAILER
       
 to: ${opts.to}

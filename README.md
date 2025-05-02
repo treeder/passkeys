@@ -1,8 +1,8 @@
 # Easy to use Passkeys library
 
-Passwordless email and pass key based authentication.
+Passwordless email and passkey based authentication.
 
-This package includes both backend code and frontend components.
+This package includes both backend code and frontend components. 
 
 ## Demo
 
@@ -18,26 +18,34 @@ NOTE: <b>these docs may not work as is</b>, I'm writing the docs before making i
 npm install treeder/passkeys
 ```
 
-You'll need to configure:
+You'll need to pass in the following objects when creating the passkeys object:
 
-- a mailer with a send(c, opts) function: `c.data.mailer = YOURMAILER`
-- a key value store: `c.data.kv = YOURKV`
+- appName: the name of your app
+- baseURL: base URL of your app including path up to the endpoints below
+- mailer: a mailer with a send function: `send({to: "email", subject: "subject", body: "body"})` 
+- kv: a key value store with 2 functions: `put(key, value)` and `get(key)`
+
+Callbacks you can use to update your database:
+
+- emailStart({email}): Called when user first enters email, either to sign up or sign in. Good chance to create the user. If you return an object with a `userID` field, that userID will be stored in the session and passed to emailVerified below.
+- emailVerified({email, userID}): Called after email is verified. userID will only be included if it was returned in emailStart.
+
+
 
 You'll need 6 endpoints:
 
-- /v1/auth/email/start
-- /v1/auth/email/verify
-- /v1/passkeys/new
-- /v1/passkeys/create
-- /v1/passkeys/start
-- /v1/passkeys/verify
+- /email/start
+- /email/verify
+- /passkeys/new
+- /passkeys/create
+- /passkeys/start
+- /passkeys/verify
 
-See code for each of these [here](functions/v1/auth)
-
+See an example of adding these endpoints [here](functions/v2/auth/[[catchall]].js)
 
 ### Frontend
 
-Add this to the `<head>` tag of your site:
+Add this importmap to the `<head>` tag of your site:
 
 ```html
 <script type="importmap">
@@ -53,7 +61,7 @@ Add this to the `<head>` tag of your site:
     "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3/",
     "material/": "https://cdn.jsdelivr.net/gh/treeder/material@1/",
     "api": "https://cdn.jsdelivr.net/gh/treeder/api@0/api.js",
-    "passkeys/": "https://cdn.jsdelivr.net/gh/treeder/passkeys@0/",
+    "passkeys/": "https://cdn.jsdelivr.net/gh/treeder/passkeys@1/",
   }
 }
 </script>
@@ -69,8 +77,8 @@ import 'passkeys/public/components/sign-in.js'
 <sign-in></sign-in>
 ```
 
-## Dev
+## Authenticating after sign in
 
-```sh
-make run
-```
+This handles Authorization headers and cookies for login as well as storing session data. 
+
+TODO: Fill this part in on how to use it. 

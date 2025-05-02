@@ -3,17 +3,16 @@
   font-family: 'Roboto Flex', sans-serif;
 }
 
-.container {
-  max-width: 1200px;
-  padding: 0 15px;
-  margin: 0 auto;
+body {
+  margin: 0;
 }
 
-.nav {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4px;
 }
+
 
 .footer {
   border-top: 1px solid #eaeaea;
@@ -25,9 +24,18 @@
   display: flex;
 }
 
+.jcsb {
+  justify-content: space-between;
+}
+
 .jcc {
   justify-content: center;
 }
+
+.aic {
+  align-items: center;
+}
+
 
 .g12 {
   gap: 12px;
@@ -35,4 +43,12 @@
 
 .w100 {
   width: 100%;
+}
+
+.pl12 {
+  padding-left: 12px;
+}
+
+.pr12 {
+  padding-right: 12px;
 }

@@ -1,5 +1,5 @@
 import { parse, serialize } from "cookie-es"
-import { globals } from "./globals.js"
+import { globals } from "../functions/globals.js"
 import { nanoid } from "nanoid"
 import { hostname } from "./utils.js"
 
@@ -22,7 +22,7 @@ export async function getSessionByID(c, sessionID) {
   if (sessions[sessionID]) {
     return sessions[sessionID]
   }
-  let sessionData = await c.data.kv.get(`session-${sessionID}`)
+  let sessionData = await c.kv.get(`session-${sessionID}`)
   // console.log("sessionData:", sessionData)
   if (!sessionData) {
     return {
@@ -51,7 +51,7 @@ async function putSession(c, sessionID, sessionData) {
   let maxAge = 60 * 60 * 24 * 365
   let k = `session-${sessionID}`
   console.log("PUTTING SESSION:", k, sessionData)
-  await c.data.kv.put(k, JSON.stringify(sessionData), { expiration_ttl: maxAge })
+  await c.kv.put(k, JSON.stringify(sessionData), { expirationTtl: maxAge })
   sessions[sessionID] = sessionData
   let cookies = [serialize('session', sessionID, {
     path: '/',

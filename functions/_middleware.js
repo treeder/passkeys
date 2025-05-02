@@ -1,6 +1,6 @@
 import { D1 } from 'flaregun'
 import { globals, init } from './globals.js'
-import { auth } from './auth.js'
+import { auth } from '../src/auth.js'
 
 export async function onRequest(c) {
   await init(c)

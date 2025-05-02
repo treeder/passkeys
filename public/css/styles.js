@@ -13,5 +13,8 @@ export const styles = css`
 .aic {
   align-items: center;
 }
+  .error {
+    color: red;
+  }
 
 `

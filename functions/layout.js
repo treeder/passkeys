@@ -50,15 +50,21 @@ export function header(d) {
 
 function nav(d) {
   return `
-  <div style="background-color: #eee; padding: 20px 0; margin-bottom: 20px;">
-      <div class="container nav">
-          <div style="display: flex; gap: 20px; align-items: center;">
+  <script type="module">
+    import '/components/sign-out.js'
+  </script>
+  <div style="background-color: #eee; margin-bottom: 20px; padding-top: 10px; padding-bottom: 10px;">
+      <div class="flex jcsb g12 pl12 pr12 aic">
+          <div class="flex g12 aic">
               <div style="font-weight: bold; font-size: larger;">
-                  <a href="https://github.com/treeder/passkeys">Pass Keys Rock</a>
+                  <a href="https://github.com/treeder/passkeys">Passkeys Rock</a>
               </div>
           </div>
           <div>
               <!-- Right stuff -->
+              <div>
+                <sign-out></sign-out>
+              </div>
               
           </div>
       </div>
@@ -70,8 +76,8 @@ export function footer(d) {
   return `
   <div class="container" style="border-top: 1px solid silver; margin-top: 20px; padding-top: 20px;>
       <div class="flex" style="flex-direction: column; gap: 12px;">
-      <a href="https://github.com/treeder/rend">Rend</a>
-      <div>Just rend it!</div>
+      <a href="https://github.com/treeder/passkeys">Passkeys</a>
+      <div>No more passwords!</div>
   </div>
 </body>
 </html>

@@ -14,8 +14,7 @@ export async function auth(c, next) {
     let type = parts[0]
     let token = parts[1]
 
-    // I THINK API KEY SHOULD BE JUST FOR A PARTICULAR USER... MAYBE? 
-    if (type == 'ApiKey') {
+    if (type == 'apiKey') {
       let apiKey = await globals.d1.prepare(`SELECT * FROM apiKeys WHERE key = ?`).bind(token).first()
       if (!apiKey) {
         throw new APIError("API key not found", { status: 401 })
@@ -43,17 +42,15 @@ async function setupUserSession(c, sessionID) {
     throw new APIError("Session not found", { status: 401 })
   }
   let session = JSON.parse(r)
-  console.log("SESSION:", session)
+  // console.log("SESSION:", session)
   c.data.userID = session.userID
   c.data.user = {
     id: session.userID,
     email: session.email,
   }
-
 }
 
-
-export function getUserByEmail(email) {
+export async function getUserByEmail(email) {
   return {
     id: email,
     email: email,

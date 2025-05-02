@@ -4,16 +4,20 @@ import 'material/textfield/filled-text-field.js'
 import { api } from 'api'
 import { startRegistration, startAuthentication } from 'https://cdn.jsdelivr.net/npm/@simplewebauthn/browser@13/esm/index.js'
 import { styles as sharedStyles } from '../css/styles.js'
+import { signOut } from '../js/signout.js'
 
 export class SignIn extends LitElement {
+
   static styles = [
     sharedStyles,
     css`p { color: blue }`
   ]
 
   static properties = {
+
+    baseURL: { type: String },
+
     capable: { type: Boolean },
-    name: { type: String },
     hasPasskey: { type: Boolean },
     error: { type: Object },
     success: { type: String },
@@ -21,10 +25,11 @@ export class SignIn extends LitElement {
 
   constructor() {
     super()
-    this.name = 'Somebody'
+
+    this.baseURL = ''
+
     this.capable = false
     this.hasPasskey = false
-
     this.error = null
     this.success = null
 
@@ -51,7 +56,7 @@ export class SignIn extends LitElement {
     } else {
       // see if we have a passkey
       try {
-        let r = await api(`/v1/auth/passkeys/check`, {
+        let r = await api(`${this.baseURL}/passkeys/check`, {
           method: "POST",
           body: {},
         })
@@ -79,7 +84,7 @@ export class SignIn extends LitElement {
     if (this.success) {
       return html`<div class="success" style="margin-top: 40px;">
             ${this.success.message}
-            ${this.success.link ? html`<a href="${this.success.link}">Click to verify</a>` : ''}
+            ${this.success.link ? html`<br><br><a href="${this.success.link}">Click to verify</a>` : ''}
             </div>`
     }
 
@@ -89,18 +94,21 @@ export class SignIn extends LitElement {
           <div class="flex col g24 aic" style="min-width: 400px; padding-top: 40px;">
             ${err}
             ${this.hasPasskey ? html`
-              <div>You already have a passkey. <a href="/dashboard">Continue to dashboard</a>.</div>
+              <div>You already have a passkey.<br><br><a href="/dashboard">Continue to dashboard</a>.</div>
               `: html`
-            <div>
-              <md-filled-button @click=${this.createPasskey}>Create Passkey</md-filled-button>
-            </div>
             <div>
                 <a href="/dashboard">Skip this and create passkey later</a>
             </div>
             `}
             <div>
+              <md-filled-button @click=${this.createPasskey}>Create Passkey</md-filled-button>
+            </div>
+
+            <!--
+            <div>
               <md-filled-button @click=${this.signOut}>Sign out</md-filled-button>
             </div>
+            -->
           </div>`
       return s // comment this out to test creating and signing in with pass keys
     }
@@ -112,7 +120,6 @@ export class SignIn extends LitElement {
             <!-- <input type="text" id="email" autocomplete="webauthn"> -->
             <md-filled-text-field label="Email" type="email" id="email" @keyup=${this.keyUpHandler} required autocomplete="webauthn"></md-filled-text-field>
             <md-filled-button @click=${this.emailStart}>Continue</md-filled-button>
-            <!-- <md-filled-button @click=${this.createPasskey}>Continue</md-filled-button> -->
             <div>
             <hr>
             </div>
@@ -126,15 +133,8 @@ export class SignIn extends LitElement {
   }
 
   signOut() {
-    let c = `session=; expires=Thu, 01 Jan 1970 00:00:01 UTC; Secure; Domain=${window.location.hostname}; Path=/;`
-    console.log(c)
-    document.cookie = c
-    c = `userID=; expires=Thu, 01 Jan 1970 00:00:01 UTC; Secure; Domain=${window.location.hostname}; Path=/;`
-    console.log(c)
-    document.cookie = c
-    window.location.href = '/'
+    signOut()
   }
-
 
   keyUpHandler(e) {
     if (e.key === 'Enter') {
@@ -152,7 +152,7 @@ export class SignIn extends LitElement {
     let email = emailF.value
     console.log("email:", email)
     try {
-      let r = await api(`/v1/auth/email/start`, {
+      let r = await api(`${this.baseURL}/email/start`, {
         method: "POST",
         body: { email: email },
       })
@@ -171,12 +171,11 @@ export class SignIn extends LitElement {
   }
 
   async signin2(conditionalUI = false) {
-    console.log("credGet")
     console.log("conditionalUI:", conditionalUI)
     this.error = null
     let challenge
     try {
-      challenge = await api(`/v1/auth/passkeys/start`, {
+      challenge = await api(`${this.baseURL}/passkeys/start`, {
         method: "POST",
         body: {},
       })
@@ -190,9 +189,9 @@ export class SignIn extends LitElement {
       })
       console.log("CRED:", cred)
       // let userID = isoBase64URL.toUTF8String(cred.response.userhandle)
-      console.log("USER ID FROM CRED, aka userHandle:", cred.response.userhandle)
+      console.log("USER ID FROM CRED, aka userHandle:", cred.response.userHandle)
 
-      let r = await api(`/v1/auth/passkeys/verify`, {
+      let r = await api(`${this.baseURL}/passkeys/verify`, {
         method: "POST",
         body: {
           credential: cred,
@@ -219,7 +218,7 @@ export class SignIn extends LitElement {
     this.error = null
     let challenge
     try {
-      challenge = await api(`/v1/auth/passkeys/new`, {
+      challenge = await api(`${this.baseURL}/passkeys/new`, {
         method: "POST",
         body: {},
       })
@@ -243,7 +242,7 @@ export class SignIn extends LitElement {
     }
 
     try {
-      let r = await api(`/v1/auth/passkeys/create`, {
+      let r = await api(`${this.baseURL}/passkeys/create`, {
         method: "POST",
         body: {
           credential: attResp,
@@ -254,7 +253,7 @@ export class SignIn extends LitElement {
       if (!r.verified) {
         this.error = { message: "Not verified" }
       } else {
-        this.success = { message: "Passkey created! Next time you can sign in with it." }
+        this.success = { message: html`Passkey created! Next time you can sign in with it.<br><br><a href="/dashboard">Continue to dashboard</a>` }
       }
     } catch (e) {
       console.log("e:", e)
