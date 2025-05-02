@@ -182,14 +182,25 @@ export class SignIn extends LitElement {
       console.log("challenge:", challenge)
 
       // Pass the options to the authenticator and wait for a response
-      let cred = await startAuthentication({
-        optionsJSON: challenge,
-        useBrowserAutofill: conditionalUI,
-        verifyBrowserAutofillInput: false
-      })
-      console.log("CRED:", cred)
-      // let userID = isoBase64URL.toUTF8String(cred.response.userhandle)
-      console.log("USER ID FROM CRED, aka userHandle:", cred.response.userHandle)
+      let cred
+      try {
+        cred = await startAuthentication({
+          optionsJSON: challenge,
+          useBrowserAutofill: conditionalUI,
+          verifyBrowserAutofillInput: false
+        })
+        console.log("CRED:", cred)
+        // let userID = isoBase64URL.toUTF8String(cred.response.userhandle)
+        console.log("USER ID FROM CRED, aka userHandle:", cred.response.userHandle)
+      } catch (e) {
+        if (conditionalUI) {
+          if (e.name == "AbortError") {
+            console.log("ignoring conditional abort", e)
+            return
+          }
+        }
+        throw e
+      }
 
       let r = await api(`${this.baseURL}/passkeys/verify`, {
         method: "POST",

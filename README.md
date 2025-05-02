@@ -2,15 +2,25 @@
 
 Passwordless email and passkey based authentication.
 
-This package includes both backend code and frontend components. 
+The objective of this is to make it as easy as possible to add passkeys to your app. It's quite complicated
+to get right so hopefully this will help you. 
+
+This package includes backend code, frontend code and ready to go frontend web components. 
 
 ## Demo
 
 [Demo](https://passkeys-3nt.pages.dev/)
 
+## Flow
+
+- New user will enter email address and get sent a magic sign in link. 
+- They click the link to sign in (common flow).
+- After they are signed in, they can then create a passkey (or not, this is optional, users can continue using email sign in if they prefer).
+- After a passkey is created, they can use it the next time they try to login instead of using the email way.
+
 ## Usage
 
-NOTE: <b>these docs may not work as is</b>, I'm writing the docs before making it all work like the docs. 
+NOTE: <b>these docs may not work exactly as intended yet</b>, I'm writing the docs before making it all work like the docs. If you notice something not working as documented, please create an issue. 
 
 ###  Backend:
 
@@ -24,13 +34,13 @@ You'll need to pass in the following objects when creating the passkeys object:
 - baseURL: base URL of your app including path up to the endpoints below
 - mailer: a mailer with a send function: `send({to: "email", subject: "subject", body: "body"})` 
 - kv: a key value store with 2 functions: `put(key, value)` and `get(key)`
+- callbacks: see below
 
 Callbacks you can use to update your database:
 
-- emailStart({email}): Called when user first enters email, either to sign up or sign in. Good chance to create the user. If you return an object with a `userID` field, that userID will be stored in the session and passed to emailVerified below.
-- emailVerified({email, userID}): Called after email is verified. userID will only be included if it was returned in emailStart.
-
-
+- emailStart({email}): Called when user first enters email, either to sign up or sign in. Good chance to create the user. If you return an object with a `userID` field, that userID will be stored in the session and passed to emailVerified below. If you don't do this, a new unique ID will be assigned. 
+- emailVerified({email, userID}): Called after email is verified. 
+- passkeyVerified({email, userID}): Called after user logs in with a passkey. 
 
 You'll need 6 endpoints:
 

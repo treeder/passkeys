@@ -269,6 +269,10 @@ export class Passkeys {
     shallowCopy.counter = verification.authenticationInfo.newCounter
     await this.opts.kv.put(`passkey-${userID}`, JSON.stringify(shallowCopy))
 
+    if (this.opts.passkeyVerified) {
+      await this.opts.passkeyVerified({ userID, email: sess.email })
+    }
+
     let { cookies } = await updateSession(this.c2(c), {
       userID: userID,
     })
