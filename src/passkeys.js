@@ -34,7 +34,7 @@ export class Passkeys {
     // todo: callback to let implementor create a user
     let userID = null
     if (this.opts.emailStart) {
-      let ur = await this.opts.emailStart(input.email)
+      let ur = await this.opts.emailStart({ email: input.email })
       userID = ur.userID
     }
     if (!userID) {
