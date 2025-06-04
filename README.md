@@ -93,7 +93,19 @@ There is a [pre-built component](/public/components/sign-in.js) you can just dro
 
 #### Using the pre-built component 
 
-Add this importmap to the `<head>` tag of your site:
+On your sign in page, add:
+
+```html
+<script type="module">
+import 'passkeys/public/components/sign-in.js'
+</script>
+
+<sign-in baseURL="/v2/auth"></sign-in>
+```
+
+Using a CDN:
+
+If you'd like to use a CDN rather than your bundler, the above part stays the same, but add this importmap to between the `<head>` tags of your site:
 
 ```html
 <script type="importmap">
@@ -113,14 +125,4 @@ Add this importmap to the `<head>` tag of your site:
   }
 }
 </script>
-```
-
-Then on your sign in page, add:
-
-```html
-<script type="module">
-import 'passkeys/public/components/sign-in.js'
-</script>
-
-<sign-in baseURL="/v2/auth"></sign-in>
 ```
