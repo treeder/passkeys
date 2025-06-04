@@ -105,7 +105,7 @@ import 'passkeys/public/components/sign-in.js'
 
 Using a CDN:
 
-If you'd like to use a CDN rather than your bundler, the above part stays the same, but add this importmap to between the `<head>` tags of your site:
+If you'd like to use a CDN rather than your bundler, the above part stays the same, but add this importmap between the `<head>` tags of your site:
 
 ```html
 <script type="importmap">
