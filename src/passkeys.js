@@ -10,9 +10,11 @@ export class Passkeys {
 
   /**
    * @param {Object} opts
+   * @param {String} opts.appName - the name of your app
    * @param {String} opts.baseURL - the base URL of the app / API that this will use for redirects and links
    * @param {Object} opts.kv - a key value store object with put() and get() methods. 
    * @param {Object} opts.mailer - an object with a send() method
+   * @param {Object} opts.logger - a logger object with a log() method
    */
   constructor(opts = {}) {
     this.opts = opts
@@ -170,7 +172,7 @@ export class Passkeys {
     })
 
     this.opts.logger.log("verification:", verification)
-    if (!verification.verified) return Response.json({ error: { message: "verification failed" } }, 401)
+    if (!verification.verified) return Response.json({ error: { message: "verification failed" } }, { status: 401 })
 
     // store authenticator info in db
     const { registrationInfo } = verification

@@ -227,25 +227,28 @@ export class SignIn extends LitElement {
 
   async createPasskey() {
     this.error = null
-    let challenge
+    let regOptions
     try {
-      challenge = await api(`${this.baseURL}/passkeys/new`, {
+      regOptions = await api(`${this.baseURL}/passkeys/new`, {
         method: "POST",
         body: {},
       })
-      console.log("challenge:", challenge)
+      console.log("regOptions:", regOptions)
     } catch (e) {
       console.log("e:", e)
       this.error = e
       return
     }
-    let userID = challenge.user.id
-    console.log("USER ID FROM CHALLENGE:", userID)
+    let userID = regOptions.user.id
+    console.log("USER ID FROM regOptions:", userID)
 
     let attResp = null
     try {
       // Pass the options to the authenticator and wait for a response
-      attResp = await startRegistration({ optionsJSON: challenge, useAutoRegister: true })
+      attResp = await startRegistration({
+        optionsJSON: regOptions,
+        // useAutoRegister: true, // this errors with NotAllowedError sometimes...
+      })
     } catch (error) {
       console.log("error:", error)
       this.error = error
