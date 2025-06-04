@@ -9,6 +9,8 @@ This package includes backend code, frontend code and ready to go frontend web c
 
 ## Demo
 
+Check out this demo to see it in action. 
+
 [Demo](https://passkeys-3nt.pages.dev/)
 
 ## Flow
@@ -20,25 +22,57 @@ This package includes backend code, frontend code and ready to go frontend web c
 
 ## Usage
 
-NOTE: <b>these docs may not work exactly as intended yet</b>, I'm writing the docs before making it all work like the docs. If you notice something not working as documented, please create an issue. 
+NOTE: <b>Please create an issue if you notice anything not working in the docs</b>.
 
 ###  Backend:
 
-```
+```sh
 npm install treeder/passkeys
 ```
 
-You'll need to pass in the following objects when creating the passkeys object:
+Then create a `Passkeys` object to handle everything for you:
 
-- appName: the name of your app
-- baseURL: base URL of your app including path up to the endpoints below
-- mailer: a mailer with a send function: `send({to: "email", subject: "subject", body: "body"})` 
-- kv: a key value store with 2 functions: `put(key, value)` and `get(key)`
-- callbacks: see below
+```js
+let passkeys = new Passkeys({
+  appName: "Passkeys demo", // the name of your app
+  baseURL: `${hostURL(c)}/v2/auth`, // base URL of your app including path up to the endpoints below
+  kv: c.env.KV, // a key value store with 2 functions: `put(key, value)` and `get(key)`
+  mailer: globals.mailer, // a mailer with a send function: `send({to: "email", subject: "subject", body: "body"})` 
+  logger: c.data.logger, // (optional) a logger with a log function: `log(message)`
+  // Callbacks you can use to update your database, see below
+})
+
+// Then based on the path after the `baseURL` above:
+if (p[0] == "email") {
+  if (p[1] == "start") {
+    return await passkeys.emailStart(c)
+  }
+  if (p[1] == "verify") {
+    return await passkeys.emailVerify(c)
+  }
+} else if (p[0] == "passkeys") {
+  if (p[1] == "new") {
+    return await passkeys.new(c)
+  }
+  if (p[1] == "start") {
+    return await passkeys.start(c)
+  }
+  if (p[1] == "create") {
+    return await passkeys.create(c)
+  }
+  if (p[1] == "verify") {
+    return await passkeys.verify(c)
+  }
+  if (p[1] == "check") {
+    return await passkeys.check(c)
+  }
+}
+```
 
 Callbacks you can use to update your database:
 
-- emailStart({email}): Called when user first enters email, either to sign up or sign in. Good chance to create the user. If you return an object with a `userID` field, that userID will be stored in the session and passed to emailVerified below. If you don't do this, a new unique ID will be assigned. 
+- emailStart({email}): Called when user first enters email, either to sign up or sign in. Good chance to create the 
+  user. If you return an object with a `userID` field, that userID will be stored in the session and passed to emailVerified below. If you don't do this, a new unique ID will be assigned. 
 - emailVerified({email, userID}): Called after email is verified. 
 - passkeyVerified({email, userID}): Called after user logs in with a passkey. 
 
@@ -54,6 +88,10 @@ You'll need 6 endpoints:
 See an example of adding these endpoints [here](functions/v2/auth/[[catchall]].js)
 
 ### Frontend
+
+There is a [pre-built component](/public/components/sign-in.js) you can just drop in and use or copy it to customize how you want. 
+
+#### Using the pre-built component 
 
 Add this importmap to the `<head>` tag of your site:
 
@@ -84,11 +122,5 @@ Then on your sign in page, add:
 import 'passkeys/public/components/sign-in.js'
 </script>
 
-<sign-in></sign-in>
+<sign-in baseURL="/v2/auth"></sign-in>
 ```
-
-## Authenticating after sign in
-
-This handles Authorization headers and cookies for login as well as storing session data. 
-
-TODO: Fill this part in on how to use it. 
