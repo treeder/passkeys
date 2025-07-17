@@ -16,6 +16,7 @@ export class SignIn extends LitElement {
   static properties = {
 
     baseURL: { type: String },
+    afterLoginHref: { type: String },
 
     capable: { type: Boolean },
     hasPasskey: { type: Boolean },
@@ -27,6 +28,7 @@ export class SignIn extends LitElement {
     super()
 
     this.baseURL = ''
+    this.afterLoginHref = '/dashboard'
 
     this.capable = false
     this.hasPasskey = false
@@ -94,10 +96,12 @@ export class SignIn extends LitElement {
           <div class="flex col g24 aic" style="min-width: 400px; padding-top: 40px;">
             ${err}
             ${this.hasPasskey ? html`
-              <div>You already have a passkey.<br><br><a href="/dashboard">Continue to dashboard</a>.</div>
+              <div>You already have a passkey.
+              <br><br>
+              <a href="${this.afterLoginHref}">Continue to dashboard</a>.</div>
               `: html`
             <div>
-                <a href="/dashboard">Skip this and create passkey later</a>
+                <a href="${this.afterLoginHref}">Skip this and create passkey later</a>
             </div>
             `}
             <div>
@@ -267,7 +271,10 @@ export class SignIn extends LitElement {
       if (!r.verified) {
         this.error = { message: "Not verified" }
       } else {
-        this.success = { message: html`Passkey created! Next time you can sign in with it.<br><br><a href="/dashboard">Continue to dashboard</a>` }
+        this.success = {
+          message: html`Passkey created! Next time you can sign in with it.
+          <br><br><a href="${this.afterLoginHref}">Continue to dashboard</a>`
+        }
       }
     } catch (e) {
       console.log("e:", e)
