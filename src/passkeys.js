@@ -89,6 +89,11 @@ export class Passkeys {
     // let user = await this.opts.getUserByEmail(rr.email)
     let { cookies } = await updateSession(this.c2(c), rr)
 
+    if (this.opts.emailVerified) {
+      await this.opts.emailVerified({ email: rr.email, userID: rr.userID })
+    }
+
+    // TODO: let this redirect be customizable
     let url = `${hostURL(c)}/signin`
     let headers = new Headers({
       "Location": url,

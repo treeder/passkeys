@@ -72,8 +72,9 @@ if (p[0] == "email") {
 Callbacks you can use to update your database:
 
 - emailStart({email}): Called when user first enters email, either to sign up or sign in. Good chance to create the 
-  user. If you return an object with a `userID` field, that userID will be stored in the session and passed to emailVerified below. If you don't do this, a new unique ID will be assigned. 
-- emailVerified({email, userID}): Called after email is verified. 
+  user and get/set a user ID. If you return an object with a `userID` field, that userID will be stored in the session and passed to emailVerified below. If you don't do this, a new unique ID will be assigned. 
+- emailSend({ userID, email, token, url }): Lets you send your own verification email. Send it to `email` and include the `url` in the email for the user to click to verify.
+- emailVerified({email, userID}): Called after user clicks the verification link in their email and email is verified.
 - passkeyVerified({email, userID}): Called after user logs in with a passkey. 
 
 You'll need 6 endpoints:
