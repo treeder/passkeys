@@ -1,17 +1,14 @@
 import { html, css, LitElement } from 'lit'
-import 'material/button/outlined-button.js'
+import 'material/buttons/button.js'
 import { signOut } from '../js/signout.js'
 
 export class SignOut extends LitElement {
-
   static styles = [
     // sharedStyles,
     // css`p { color: blue }`
   ]
 
-  static properties = {
-
-  }
+  static properties = {}
 
   constructor() {
     super()
@@ -22,15 +19,13 @@ export class SignOut extends LitElement {
   }
   render() {
     if (this.isLoggedIn()) {
-      return html`
-    <md-outlined-button @click=${this.signOut}>Sign out</md-outlined-button>
-    `
+      return html` <md-button color="outlined" @click=${this.signOut}>Sign out</md-button> `
     } else {
-      return html`<md-outlined-button href="/signin">Sign in</md-outlined-button>`
+      return html`<md-button color="outlined" href="/signin">Sign in</md-button>`
     }
   }
   isLoggedIn() {
-    return document.cookie.includes('userID=')
+    return document.cookie.includes('userId=')
   }
   async signOut() {
     await signOut()
