@@ -5,7 +5,7 @@ export async function onRequest(c) {
   let cookies = parse(c.request.headers.get('cookie') || '')
   return c.data.rend.html({
     main: render,
-    name: cookies.userID || "nobody",
+    name: cookies.userId || "nobody",
   })
 }
 

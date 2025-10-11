@@ -1,7 +1,7 @@
-import { parse, serialize } from "cookie-es"
-import { globals } from "../functions/globals.js"
-import { nanoid } from "nanoid"
-import { hostname } from "./utils.js"
+import { parse, serialize } from 'cookie-es'
+import { globals } from '../functions/globals.js'
+import { nanoid } from 'nanoid'
+import { hostname } from './utils.js'
 
 // currently active session cache
 const sessions = {}
@@ -26,7 +26,7 @@ export async function getSessionByID(c, sessionID) {
   // console.log("sessionData:", sessionData)
   if (!sessionData) {
     return {
-      id: sessionID
+      id: sessionID,
     }
     // throw new Error("session not found: no session data")
   }
@@ -39,7 +39,7 @@ export async function getSessionByID(c, sessionID) {
 // this will overwrite the session
 export async function setSession(c, sessionData) {
   let sessionID = getCookie(c, 'session')
-  console.log("set session sessionID:", sessionID)
+  console.log('set session sessionID:', sessionID)
   return await putSession(c, sessionID, sessionData)
 }
 
@@ -50,24 +50,28 @@ async function putSession(c, sessionID, sessionData) {
   sessionData.id = sessionID
   let maxAge = 60 * 60 * 24 * 365
   let k = `session-${sessionID}`
-  console.log("PUTTING SESSION:", k, sessionData)
+  console.log('PUTTING SESSION:', k, sessionData)
   await c.kv.put(k, JSON.stringify(sessionData), { expirationTtl: maxAge })
   sessions[sessionID] = sessionData
-  let cookies = [serialize('session', sessionID, {
-    path: '/',
-    secure: true,
-    domain: hostname(c),
-    // httpOnly: true,
-    maxAge: maxAge,
-  })]
-  if (sessionData.userID) {
-    cookies.push(serialize('userID', sessionData.userID, {
+  let cookies = [
+    serialize('session', sessionID, {
       path: '/',
       secure: true,
       domain: hostname(c),
       // httpOnly: true,
       maxAge: maxAge,
-    }))
+    }),
+  ]
+  if (sessionData.userId) {
+    cookies.push(
+      serialize('userId', sessionData.userId, {
+        path: '/',
+        secure: true,
+        domain: hostname(c),
+        // httpOnly: true,
+        maxAge: maxAge,
+      }),
+    )
   }
   return {
     sessionID,
