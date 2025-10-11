@@ -2,7 +2,7 @@ import { html, css, LitElement } from 'lit'
 import 'material/buttons/button.js'
 import { signOut } from '../js/signout.js'
 
-export class SignOut extends LitElement {
+export class SignInButton extends LitElement {
   static styles = [
     // sharedStyles,
     // css`p { color: blue }`
@@ -19,7 +19,7 @@ export class SignOut extends LitElement {
   }
   render() {
     if (this.isLoggedIn()) {
-      return html` <md-button color="outlined" @click=${this.signOut}>Sign out</md-button> `
+      return html`<md-button color="outlined" @click=${this.signOut}>Sign out</md-button>`
     } else {
       return html`<md-button color="outlined" href="/signin">Sign in</md-button>`
     }
@@ -32,4 +32,4 @@ export class SignOut extends LitElement {
     window.location.href = '/'
   }
 }
-customElements.define('sign-out', SignOut)
+customElements.define('sign-in-button', SignInButton)

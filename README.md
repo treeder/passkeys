@@ -35,7 +35,7 @@ Then create a `Passkeys` object to handle everything for you:
 ```js
 let passkeys = new Passkeys({
   appName: 'Passkeys demo', // the name of your app
-  baseURL: `${hostURL(c)}/v2/auth`, // base URL of your app including path up to the endpoints below
+  baseURL: `${hostURL(c)}/auth`, // base URL of your app including path up to the endpoints below
   kv: c.env.KV, // a key value store with 2 functions: `put(key, value)` and `get(key)`
   mailer: globals.mailer, // a mailer with a send function: `send({to: "email", subject: "subject", body: "body"})`
   logger: c.data.logger, // (optional) a logger with a log function: `log(message)`
@@ -103,8 +103,12 @@ On your sign in page, add:
   import 'passkeys/public/components/sign-in.js'
 </script>
 
-<sign-in baseURL="/v2/auth"></sign-in>
+<sign-in baseURL="/auth"></sign-in>
 ```
+
+Attributes:
+
+- baseURL:
 
 Using a CDN:
 

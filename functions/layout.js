@@ -49,7 +49,7 @@ export function header(d) {
 function nav(d) {
   return `
   <script type="module">
-    import '/components/sign-out.js'
+    import '/components/sign-in-button.js'
   </script>
   <div style="background-color: #eee; margin-bottom: 20px; padding-top: 10px; padding-bottom: 10px;">
       <div class="flex jcsb g12 pl12 pr12 aic">
@@ -61,7 +61,7 @@ function nav(d) {
           <div>
               <!-- Right stuff -->
               <div>
-                <sign-out></sign-out>
+                <sign-in-button></sign-in-button>
               </div>
               
           </div>
