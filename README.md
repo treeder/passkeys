@@ -94,6 +94,8 @@ There is a [pre-built component](/public/components/sign-in.js) you can just dro
 
 #### Using the pre-built component
 
+You can use this to get started quick, then if you need to you can copy it and make changes.
+
 On your sign in page, add:
 
 ```html
