@@ -15,7 +15,8 @@ export class Passkeys {
   /**
    * @param {Object} opts
    * @param {String} opts.appName - the name of your app
-   * @param {String} opts.baseURL - the base URL of the app / API that this will use for redirects and links
+   * @param {String} opts.baseURL - the base URL of the app / API used for passkey workflows
+   * @param {String} opts.afterEmailVerifyURL - the URL to redirect to after email verification
    * @param {Object} opts.kv - a key value store object with put() and get() methods.
    * @param {Object} opts.mailer - an object with a send() method
    * @param {Object} opts.logger - a logger object with a log() method
@@ -101,8 +102,7 @@ export class Passkeys {
       await this.opts.emailVerified({ email: rr.email, userId: rr.userId })
     }
 
-    // TODO: let this redirect be customizable
-    let url = `${this.opts.baseURL}/signin`
+    let url = this.opts.afterEmailVerifyURL || `${hostURL(c)}/signin`
     let headers = new Headers({
       Location: url,
     })
