@@ -102,7 +102,7 @@ export class Passkeys {
     }
 
     // TODO: let this redirect be customizable
-    let url = `${hostURL(c)}/signin`
+    let url = `${this.opts.baseURL}/signin`
     let headers = new Headers({
       Location: url,
     })
