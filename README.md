@@ -36,6 +36,7 @@ Then create a `Passkeys` object to handle everything for you:
 let passkeys = new Passkeys({
   appName: 'Passkeys demo', // the name of your app
   baseURL: `${hostURL(c)}/auth`, // base URL of your app including path up to the endpoints below
+  afterEmailVerifyURL: `${hostURL(c)}/signin`, // URL to redirect to after email verification
   kv: c.env.KV, // a key value store with 2 functions: `put(key, value)` and `get(key)`
   mailer: globals.mailer, // a mailer with a send function: `send({to: "email", subject: "subject", body: "body"})`
   logger: c.data.logger, // (optional) a logger with a log function: `log(message)`
