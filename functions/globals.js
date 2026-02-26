@@ -10,6 +10,5 @@ export async function init(c) {
   count++
   const rend = new Rend({ layout })
   globals.rend = rend
-  globals.resend = JSON.parse(c.env.RESEND)
   // globals.mailer = new ConsoleMailer()
 }

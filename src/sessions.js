@@ -1,7 +1,7 @@
 import { parse, serialize } from 'cookie-es'
 import { globals } from '../functions/globals.js'
 import { nanoid } from 'nanoid'
-import { hostname } from './utils.js'
+import { hostname, cookieDomain } from './utils.js'
 
 // currently active session cache
 const sessions = {}
@@ -57,7 +57,7 @@ async function putSession(c, sessionID, sessionData) {
     serialize('session', sessionID, {
       path: '/',
       secure: true,
-      domain: hostname(c),
+      domain: cookieDomain(c),
       // httpOnly: true,
       maxAge: maxAge,
     }),
@@ -67,7 +67,7 @@ async function putSession(c, sessionID, sessionData) {
       serialize('userId', sessionData.userId, {
         path: '/',
         secure: true,
-        domain: hostname(c),
+        domain: cookieDomain(c),
         // httpOnly: true,
         maxAge: maxAge,
       }),

@@ -11,6 +11,7 @@ export async function onRequest(c) {
     kv: c.env.KV,
     mailer: globals.mailer,
     logger: c.data.logger,
+    domainLevels: c.env.COOKIE_DOMAIN,
   })
 
   if (p[0] == "email") {

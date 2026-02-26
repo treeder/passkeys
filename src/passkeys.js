@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { hostname, hostURL } from './utils.js'
+import { hostname, hostURL, cookieDomain } from './utils.js'
 import { getSession, updateSession } from './sessions.js'
 import {
   generateAuthenticationOptions,
@@ -20,6 +20,7 @@ export class Passkeys {
    * @param {Object} opts.kv - a key value store object with put() and get() methods.
    * @param {Object} opts.mailer - an object with a send() method
    * @param {Object} opts.logger - a logger object with a log() method
+   * @param {Number|String} opts.domainLevels - number of domain levels to keep or explicit domain string
    */
   constructor(opts = {}) {
     this.opts = opts
@@ -32,7 +33,13 @@ export class Passkeys {
   }
 
   c2(c) {
-    return { request: c.request, kv: this.opts.kv, logger: this.opts.logger }
+    return {
+      request: c.request,
+      kv: this.opts.kv,
+      logger: this.opts.logger,
+      env: c.env,
+      domainLevels: this.opts.domainLevels,
+    }
   }
 
   async emailStart(c) {
@@ -122,7 +129,7 @@ export class Passkeys {
 
     let options = {
       rpName: this.opts.appName,
-      rpID: hostname(c),
+      rpID: cookieDomain(this.c2(c)),
       userId: isoUint8Array.fromUTF8String(sess.userId), // isoBase64URL.fromBuffer(c.req.userId),
       userName: sess.email,
       userDisplayName: sess.email, // - can add this for a real username
@@ -183,7 +190,7 @@ export class Passkeys {
       response: input.credential,
       expectedChallenge: r.challenge,
       expectedOrigin: 'https://' + hostname(c),
-      expectedRPID: hostname(c),
+      expectedRPID: cookieDomain(this.c2(c)),
     })
 
     this.opts.logger.log('verification:', verification)
@@ -225,7 +232,7 @@ export class Passkeys {
   async start(c) {
     this.opts.logger.log('/passkeys/start')
     const options = await generateAuthenticationOptions({
-      rpID: hostname(c),
+      rpID: cookieDomain(this.c2(c)),
       // Require users to use a previously-registered authenticator
       // allowCredentials: userAuthenticators.map(authenticator => ({
       //     id: authenticator.credentialID,
@@ -273,7 +280,7 @@ export class Passkeys {
       response: input.credential,
       expectedChallenge: challenge,
       expectedOrigin: 'https://' + hostname(c),
-      expectedRPID: hostname(c),
+      expectedRPID: cookieDomain(this.c2(c)),
       credential: {
         id: passkey.id,
         publicKey: passkey.publicKey,
