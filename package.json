@@ -1,12 +1,14 @@
 {
   "name": "passkeys",
-  "version": "2.1.6",
+  "version": "3.0.0",
   "type": "module",
   "description": "",
   "main": "passkeys.js",
   "author": "@treeder",
   "scripts": {
-    "start": "npx wrangler pages dev ./public --kv=KV --r2=R2 --d1 D1=d1"
+    "start": "npm install && npx -y wrangler dev ./public --kv=KV --r2=R2 --d1 D1=d1 --live-reload",
+    "build": "npx -y treeder/flaregun build",
+    "test": "npx -y treeder/testkit --port=8787"
   },
   "license": "MIT",
   "dependencies": {
