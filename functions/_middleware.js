@@ -1,7 +1,7 @@
 import { D1 } from 'flaregun'
 import { globals, init } from './globals.js'
 import { auth } from '../src/auth.js'
-import { deleteCookies } from '../src/sessions.js'
+import { deleteCookies } from '../src/utils.js'
 
 export async function onRequest(c) {
   await init(c)
