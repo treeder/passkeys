@@ -1,8 +1,10 @@
-import { Rend } from "rend"
-import { layout } from "./layout.js"
-import { ConsoleMailer } from "./mailer.js"
+import { Rend } from 'rend'
+import { layout } from './layout.js'
+import { ConsoleMailer } from './mailer.js'
 
-export const globals = {}
+export const globals = {
+  domainLevels: 2,
+}
 
 let count = 0
 export async function init(c) {

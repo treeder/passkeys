@@ -18,27 +18,6 @@ export function hostname(c) {
   return extractHost(c).hostname
 }
 
-export function cookieDomain(c) {
-  let domainLevels = c.domainLevels
-  if (!domainLevels && c.env && c.env.COOKIE_DOMAIN) {
-    domainLevels = c.env.COOKIE_DOMAIN
-  }
-  if (domainLevels) {
-    // if domainLevels is a number, we'll strip that many levels off the domain
-    let levels = parseInt(domainLevels)
-    if (!isNaN(levels)) {
-      let h = hostname(c)
-      let parts = h.split('.')
-      if (parts.length < levels) {
-        return h
-      }
-      return parts.slice(-levels).join('.')
-    }
-    return domainLevels
-  }
-  return hostname(c)
-}
-
 export function hostURL(c) {
   let h2 = extractHost(c)
   let h = h2.hostname
@@ -46,6 +25,27 @@ export function hostURL(c) {
     h = 'http://' + h + (h2.port ? ':' + h2.port : '')
   } else {
     h = 'https://' + h
+  }
+  return h
+}
+
+/**
+ * @param {Object} c - the context object
+ * @param {number} [domainLevels] - number of domain levels to use for cookies and rpID, default is full domain
+ * @returns {string} the cookie domain
+ */
+export function cookieDomain(c, domainLevels) {
+  let h = hostname(c)
+  if (domainLevels) {
+    // if domainLevels is a number, we'll strip that many levels off the domain
+    let levels = parseInt(domainLevels)
+    if (!isNaN(levels)) {
+      let parts = h.split('.')
+      if (parts.length < levels) {
+        return h
+      }
+      return parts.slice(-levels).join('.')
+    }
   }
   return h
 }

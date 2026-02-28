@@ -23,12 +23,10 @@ export async function getSessionByID(c, sessionID) {
     return sessions[sessionID]
   }
   let sessionData = await c.kv.get(`session-${sessionID}`)
-  // console.log("sessionData:", sessionData)
   if (!sessionData) {
     return {
       id: sessionID,
     }
-    // throw new Error("session not found: no session data")
   }
   sessionData = JSON.parse(sessionData)
   sessionData.id = sessionID
@@ -38,12 +36,14 @@ export async function getSessionByID(c, sessionID) {
 
 // this will overwrite the session
 export async function setSession(c, sessionData) {
-  let sessionID = getCookie(c, 'session')
+  const cookie = c.request.headers.get('cookie') || ''
+  let c2 = parse(cookie)
+  let sessionID = c2.session
   console.log('set session sessionID:', sessionID)
   return await putSession(c, sessionID, sessionData)
 }
 
-async function putSession(c, sessionID, sessionData) {
+async function putSession(c, sessionID, sessionData, options = {}) {
   if (!sessionID) {
     sessionID = nanoid(40)
   }
@@ -57,7 +57,7 @@ async function putSession(c, sessionID, sessionData) {
     serialize('session', sessionID, {
       path: '/',
       secure: true,
-      domain: cookieDomain(c),
+      domain: cookieDomain(c, options.domainLevels),
       // httpOnly: true,
       maxAge: maxAge,
     }),
@@ -67,7 +67,7 @@ async function putSession(c, sessionID, sessionData) {
       serialize('userId', sessionData.userId, {
         path: '/',
         secure: true,
-        domain: cookieDomain(c),
+        domain: cookieDomain(c, options.domainLevels),
         // httpOnly: true,
         maxAge: maxAge,
       }),
@@ -80,8 +80,29 @@ async function putSession(c, sessionID, sessionData) {
 }
 
 // this will merge sessionData with existing session
-export async function updateSession(c, sessionData) {
+export async function updateSession(c, sessionData, options = {}) {
   let session = await getSession(c)
   session = { ...session, ...sessionData }
-  return await putSession(c, session.id, session)
+  return await putSession(c, session.id, session, options)
+}
+
+export function deleteCookies(c, options = {}) {
+  let cookies = []
+  cookies.push(
+    serialize('session', '', {
+      path: '/',
+      maxAge: 0,
+      secure: true,
+      domain: cookieDomain(c, options.domainLevels),
+    }),
+  )
+  cookies.push(
+    serialize('userId', '', {
+      path: '/',
+      maxAge: 0,
+      secure: true,
+      domain: cookieDomain(c, options.domainLevels),
+    }),
+  )
+  return cookies
 }
