@@ -1,3 +1,5 @@
+import { serialize } from 'cookie-es'
+
 export function extractHost(c) {
   let req = c.request
   let h = req.headers.get('x-forwarded-host') || req.headers.get('host')
@@ -27,4 +29,50 @@ export function hostURL(c) {
     h = 'https://' + h
   }
   return h
+}
+
+/**
+ * @param {Object} c - the context object
+ * @param {number} [domainLevels] - number of domain levels to use for cookies and rpID, default is full domain
+ * @returns {string} the cookie domain
+ */
+export function cookieDomain(c, domainLevels) {
+  let h = hostname(c)
+  if (domainLevels) {
+    // if domainLevels is a number, we'll strip that many levels off the domain
+    let levels = parseInt(domainLevels)
+    if (!isNaN(levels)) {
+      return sliceDomain(h, levels)
+    }
+  }
+  return h
+}
+
+export function sliceDomain(domain, levels) {
+  let parts = domain.split('.')
+  if (parts.length < levels) {
+    return domain
+  }
+  return parts.slice(-levels).join('.')
+}
+
+export function deleteCookies(c, options = {}) {
+  let cookies = []
+  cookies.push(
+    serialize('session', '', {
+      path: '/',
+      maxAge: 0,
+      secure: true,
+      domain: cookieDomain(c, options.domainLevels),
+    }),
+  )
+  cookies.push(
+    serialize('userId', '', {
+      path: '/',
+      maxAge: 0,
+      secure: true,
+      domain: cookieDomain(c, options.domainLevels),
+    }),
+  )
+  return cookies
 }

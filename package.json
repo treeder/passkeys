@@ -1,26 +1,28 @@
 {
   "name": "passkeys",
-  "version": "2.1.6",
+  "version": "3.0.0",
   "type": "module",
   "description": "",
   "main": "passkeys.js",
   "author": "@treeder",
   "scripts": {
-    "start": "npx wrangler pages dev ./public --kv=KV --r2=R2 --d1 D1=d1"
+    "start": "npm install && npx -y wrangler dev ./public --kv=KV --r2=R2 --d1 D1=d1 --live-reload",
+    "build": "npx -y treeder/flaregun build",
+    "test": "npx -y treeder/testkit --port=8787"
   },
   "license": "MIT",
   "dependencies": {
     "@simplewebauthn/server": "^13.0.1",
-    "api": "treeder/api",
-    "console-logger": "github:treeder/console-logger",
+    "api": "treeder/api#semver:^1",
+    "console-logger": "github:treeder/console-logger#semver:^1",
     "cookie-es": "^2.0.0",
-    "flaregun": "github:treeder/flaregun",
+    "flaregun": "github:treeder/flaregun#semver:^3",
     "nanoid": "^5.0.7",
-    "rend": "github:treeder/rend"
+    "rend": "github:treeder/rend#semver:^1"
   },
   "devDependencies": {
     "prettier": "^3.6.2",
-    "testkit": "github:treeder/testkit"
+    "testkit": "github:treeder/testkit#semver:^1"
   },
   "prettier": {
     "semi": false,
