@@ -42,14 +42,18 @@ export function cookieDomain(c, domainLevels) {
     // if domainLevels is a number, we'll strip that many levels off the domain
     let levels = parseInt(domainLevels)
     if (!isNaN(levels)) {
-      let parts = h.split('.')
-      if (parts.length < levels) {
-        return h
-      }
-      return parts.slice(-levels).join('.')
+      return sliceDomain(h, levels)
     }
   }
   return h
+}
+
+export function sliceDomain(domain, levels) {
+  let parts = domain.split('.')
+  if (parts.length < levels) {
+    return domain
+  }
+  return parts.slice(-levels).join('.')
 }
 
 export function deleteCookies(c, options = {}) {

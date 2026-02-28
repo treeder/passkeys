@@ -110,7 +110,7 @@ export class Passkeys {
     let rr = JSON.parse(r)
 
     // let user = await this.opts.getUserByEmail(rr.email)
-    let { cookies } = await updateSession(this.c2(c), rr)
+    let { cookies } = await updateSession(this.c2(c), rr, { domainLevels: this.opts.domainLevels })
 
     if (this.opts.emailVerified) {
       await this.opts.emailVerified({ email: rr.email, userId: rr.userId })
@@ -253,9 +253,13 @@ export class Passkeys {
       userVerification: 'preferred',
     })
 
-    let { cookies } = await updateSession(this.c2(c), {
-      challenge: options.challenge,
-    })
+    let { cookies } = await updateSession(
+      this.c2(c),
+      {
+        challenge: options.challenge,
+      },
+      { domainLevels: this.opts.domainLevels },
+    )
 
     let response = Response.json(options)
     for (let cookie of cookies) {
@@ -317,9 +321,13 @@ export class Passkeys {
       await this.opts.passkeyVerified({ userId, email: sessionData.email })
     }
 
-    let { cookies } = await updateSession(this.c2(c), {
-      userId: userId,
-    })
+    let { cookies } = await updateSession(
+      this.c2(c),
+      {
+        userId: userId,
+      },
+      { domainLevels: this.opts.domainLevels },
+    )
 
     let response = Response.json({ verified: verification.verified })
     for (let cookie of cookies) {
