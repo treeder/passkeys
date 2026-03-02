@@ -40,7 +40,7 @@ let passkeys = new Passkeys({
   kv: c.env.KV, // a key value store with 2 functions: `put(key, value)` and `get(key)`
   mailer: globals.mailer, // a mailer with a send function: `send({to: "email", subject: "subject", body: "body"})`
   logger: c.data.logger, // (optional) a logger with a log function: `log(message)`
-  // Callbacks you can use to update your database, see below
+  domainLevels: 2, // (optional) number of domain levels to use for cookies and rpID, default is full domain. Use 2 for root domain, eg: passkeys.com, Use 3 for a subdomain, eg: auth.passkeys.com, and so on. Use the same level for your cookies too (all cookie functions in this library will use this).
 })
 
 // Then based on the path after the `baseURL` above:

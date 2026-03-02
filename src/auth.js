@@ -1,11 +1,11 @@
 import { APIError } from 'api'
-import { parse } from 'cookie-es'
+import { parse, serialize } from 'cookie-es'
+import { globals } from '../functions/globals.js'
+import { cookieDomain } from './utils.js'
 
 export async function auth(c, next) {
   if (c.request.headers.get('Authorization')) {
     let az = c.request.headers.get('Authorization')
-    // console.log("AUTHORIZATION HEADER", az)
-    // console.log("COOKIE TOO?", getCookie(c, 'session'))
 
     let parts = az.split(' ')
     if (parts.length != 2) {

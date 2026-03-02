@@ -1,4 +1,4 @@
-This is the demo app. 
+This is the demo app.
 
 Run with:
 

@@ -1,4 +1,4 @@
-import { html } from "rend"
+import { html } from 'rend'
 
 export async function onRequest(c) {
   // console.log("data:", c.data)
@@ -9,12 +9,11 @@ export async function onRequest(c) {
 }
 
 function render(d) {
-
   return html`
     <h2>Hello ${d.name}!</h2>
 
     <script type="module">
-    import '/components/sign-in.js'
+      import '/components/sign-in.js'
     </script>
 
     <div class="flex jcc w100">

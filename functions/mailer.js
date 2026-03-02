@@ -7,4 +7,4 @@ subject: ${opts.subject}
 
 ${opts.body}`)
   }
-} 
+}

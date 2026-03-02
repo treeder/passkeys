@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { hostname, hostURL } from './utils.js'
+import { cookieDomain, hostname, hostURL } from './utils.js'
 import { getSession, updateSession } from './sessions.js'
 import {
   generateAuthenticationOptions,
@@ -11,28 +11,42 @@ import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers'
 import { ConsoleLogger } from 'console-logger'
 import { APIError } from 'api'
 
+/**
+ * @typedef {Object} PasskeysOptions
+ * @property {String} [appName] - the name of your app
+ * @property {String} baseURL - the base URL of the app / API used for passkey workflows
+ * @property {String} [afterEmailVerifyURL] - the URL to redirect to after email verification
+ * @property {Object} kv - a key value store object with put() and get() methods.
+ * @property {Object} [mailer] - an object with a send() method
+ * @property {Object} [logger] - a logger object with a log() method
+ * @property {Number} [domainLevels] - number of domain levels to use for cookies and rpID, default is full domain
+ * @property {Function} [emailStart]
+ * @property {Function} [emailSend]
+ * @property {Function} [emailVerified]
+ * @property {Function} [passkeyVerified]
+ */
+
 export class Passkeys {
   /**
-   * @param {Object} opts
-   * @param {String} opts.appName - the name of your app
-   * @param {String} opts.baseURL - the base URL of the app / API used for passkey workflows
-   * @param {String} opts.afterEmailVerifyURL - the URL to redirect to after email verification
-   * @param {Object} opts.kv - a key value store object with put() and get() methods.
-   * @param {Object} opts.mailer - an object with a send() method
-   * @param {Object} opts.logger - a logger object with a log() method
+   * @param {PasskeysOptions} [opts]
    */
-  constructor(opts = {}) {
-    this.opts = opts
+  constructor(opts) {
+    /** @type {PasskeysOptions} */
+    this.opts = /** @type {PasskeysOptions} */ (opts || {})
     if (!this.opts.baseURL) throw new Error('baseURL is required')
     if (!this.opts.kv) throw new Error('kv is required')
-    // if (!this.opts.mailer) throw new Error("mailer is required")
     if (!this.opts.logger) {
       this.opts.logger = new ConsoleLogger()
     }
   }
 
   c2(c) {
-    return { request: c.request, kv: this.opts.kv, logger: this.opts.logger }
+    return {
+      request: c.request,
+      kv: this.opts.kv,
+      logger: this.opts.logger,
+      env: c.env,
+    }
   }
 
   async emailStart(c) {
@@ -96,7 +110,7 @@ export class Passkeys {
     let rr = JSON.parse(r)
 
     // let user = await this.opts.getUserByEmail(rr.email)
-    let { cookies } = await updateSession(this.c2(c), rr)
+    let { cookies } = await updateSession(this.c2(c), rr, { domainLevels: this.opts.domainLevels })
 
     if (this.opts.emailVerified) {
       await this.opts.emailVerified({ email: rr.email, userId: rr.userId })
@@ -122,10 +136,11 @@ export class Passkeys {
 
     let options = {
       rpName: this.opts.appName,
-      rpID: hostname(c),
+      rpID: cookieDomain(this.c2(c), this.opts.domainLevels),
       userId: isoUint8Array.fromUTF8String(sess.userId), // isoBase64URL.fromBuffer(c.req.userId),
       userName: sess.email,
       userDisplayName: sess.email, // - can add this for a real username
+      /** @type {'none'} */
       attestationType: 'none',
       // Prevent users from re-registering existing authenticators
       // excludeCredentials: userAuthenticators.map(authenticator => ({
@@ -137,7 +152,9 @@ export class Passkeys {
       excludeCredentials: [],
       // See "Guiding use of authenticators via authenticatorSelection" below
       authenticatorSelection: {
+        /** @type {'required'} */
         residentKey: 'required',
+        /** @type {'required'} */
         userVerification: 'required',
         // authenticatorAttachment: 'platform',
       },
@@ -183,7 +200,7 @@ export class Passkeys {
       response: input.credential,
       expectedChallenge: r.challenge,
       expectedOrigin: 'https://' + hostname(c),
-      expectedRPID: hostname(c),
+      expectedRPID: cookieDomain(this.c2(c), this.opts.domainLevels),
     })
 
     this.opts.logger.log('verification:', verification)
@@ -225,7 +242,7 @@ export class Passkeys {
   async start(c) {
     this.opts.logger.log('/passkeys/start')
     const options = await generateAuthenticationOptions({
-      rpID: hostname(c),
+      rpID: cookieDomain(this.c2(c), this.opts.domainLevels),
       // Require users to use a previously-registered authenticator
       // allowCredentials: userAuthenticators.map(authenticator => ({
       //     id: authenticator.credentialID,
@@ -236,9 +253,13 @@ export class Passkeys {
       userVerification: 'preferred',
     })
 
-    let { cookies } = await updateSession(this.c2(c), {
-      challenge: options.challenge,
-    })
+    let { cookies } = await updateSession(
+      this.c2(c),
+      {
+        challenge: options.challenge,
+      },
+      { domainLevels: this.opts.domainLevels },
+    )
 
     let response = Response.json(options)
     for (let cookie of cookies) {
@@ -257,7 +278,7 @@ export class Passkeys {
 
     let passkey = await this.opts.kv.get(`passkeys-${input.credential.id}`)
     if (!passkey) {
-      throw new Error(`Could not find passkey for user ${this.opts.userId}`)
+      throw new Error(`Could not find passkey for user ${userId}`)
     }
     passkey = JSON.parse(passkey)
     this.opts.logger.log('passkey:', passkey.id)
@@ -273,7 +294,7 @@ export class Passkeys {
       response: input.credential,
       expectedChallenge: challenge,
       expectedOrigin: 'https://' + hostname(c),
-      expectedRPID: hostname(c),
+      expectedRPID: cookieDomain(c, this.opts.domainLevels),
       credential: {
         id: passkey.id,
         publicKey: passkey.publicKey,
@@ -297,12 +318,16 @@ export class Passkeys {
     await this.opts.kv.put(`passkeys-${passkey.id}`, JSON.stringify(shallowCopy))
 
     if (this.opts.passkeyVerified) {
-      await this.opts.passkeyVerified({ userId, email: sess.email })
+      await this.opts.passkeyVerified({ userId, email: sessionData.email })
     }
 
-    let { cookies } = await updateSession(this.c2(c), {
-      userId: userId,
-    })
+    let { cookies } = await updateSession(
+      this.c2(c),
+      {
+        userId: userId,
+      },
+      { domainLevels: this.opts.domainLevels },
+    )
 
     let response = Response.json({ verified: verification.verified })
     for (let cookie of cookies) {
