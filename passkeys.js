@@ -1,3 +1,3 @@
-import { Passkeys } from "./src/passkeys.js"
+import { Passkeys } from './src/passkeys.js'
 
 export { Passkeys }
