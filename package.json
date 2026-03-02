@@ -6,8 +6,10 @@
   "main": "passkeys.js",
   "author": "@treeder",
   "scripts": {
-    "start": "npm install && npx -y wrangler dev ./public --kv=KV --r2=R2 --d1 D1=d1 --live-reload",
+    "start": "npm install && npx -y wrangler pages dev ./public --kv=KV --r2=R2 --d1 D1=d1 --live-reload",
     "build": "npx -y treeder/flaregun build",
+    "run": "npx -y wrangler pages dev ./public --kv=KV --r2=R2 --d1 D1=d1",
+    "test:run": "node test/test.js",
     "test": "npx -y treeder/testkit --port=8787"
   },
   "license": "MIT",

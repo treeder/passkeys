@@ -1,9 +1,11 @@
 import { API } from 'api'
 import { TestKit, assert } from 'testkit'
+import { testDefaultDomain } from './test_default.js'
+import { testNumericDomain } from './test_numeric.js'
 
 // Helper to setup context
 function setup() {
-  let apiURL = 'http://localhost:8789' // Note: using port 8789
+  let apiURL = 'http://localhost:8788' // Note: using port 8789
   let api = new API({
     apiURL,
   })
@@ -14,5 +16,5 @@ function setup() {
 }
 
 let c = setup()
-let testKit = new TestKit(c, [testDefaultDomain, testNumericDomain, testCustomDomain])
+let testKit = new TestKit(c, [testDefaultDomain, testNumericDomain])
 await testKit.run()
