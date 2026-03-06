@@ -39,16 +39,13 @@ export function hostURL(c) {
 export function cookieDomain(c, domainLevels) {
   let h = hostname(c)
   if (domainLevels) {
-    // if domainLevels is a number, we'll strip that many levels off the domain
-    let levels = parseInt(domainLevels)
-    if (!isNaN(levels)) {
-      return sliceDomain(h, levels)
-    }
+    return sliceDomain(h, domainLevels)
   }
   return h
 }
 
 export function sliceDomain(domain, levels) {
+  if (levels < 2) levels = 2
   let parts = domain.split('.')
   if (parts.length < levels) {
     return domain
