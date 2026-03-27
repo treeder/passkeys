@@ -137,7 +137,7 @@ export class Passkeys {
     let options = {
       rpName: this.opts.appName,
       rpID: cookieDomain(this.c2(c), this.opts.domainLevels),
-      userId: isoUint8Array.fromUTF8String(sess.userId), // isoBase64URL.fromBuffer(c.req.userId),
+      userID: isoUint8Array.fromUTF8String(sess.userId), // isoBase64URL.fromBuffer(c.req.userId),
       userName: sess.email,
       userDisplayName: sess.email, // - can add this for a real username
       /** @type {'none'} */
