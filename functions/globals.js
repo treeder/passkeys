@@ -10,6 +10,9 @@ let count = 0
 export async function init(c) {
   if (count > 0) return
   count++
+  if (c.env.ENV == 'prod') {
+    globals.domainLevels = 3 // x.pages.dev
+  }
   const rend = new Rend({ layout })
   globals.rend = rend
   // globals.mailer = new ConsoleMailer()
