@@ -3,7 +3,7 @@ import { layout } from './layout.js'
 import { ConsoleMailer } from './mailer.js'
 
 export const globals = {
-  domainLevels: 3,
+  domainLevels: 2,
 }
 
 let count = 0
