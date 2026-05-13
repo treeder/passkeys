@@ -35,7 +35,7 @@ export function header(d) {
         "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3/lit-html.js",
         "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3/",
         "material/": "https://cdn.jsdelivr.net/gh/treeder/material@2.11/",
-        "api": "https://cdn.jsdelivr.net/gh/treeder/api@0/api.js"
+        "api": "https://cdn.jsdelivr.net/gh/treeder/api@1/api.js"
       }
     }
     </script>
