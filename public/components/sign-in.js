@@ -1,6 +1,6 @@
 import { html, css, LitElement } from 'lit'
 import 'material/buttons/button.js'
-import 'material/text-field/text-field.js'
+import 'material/text/text-field.js'
 import { api } from 'api'
 import { startRegistration, startAuthentication } from '../js/auth.js'
 import { styles as sharedStyles } from '../css/styles.js'

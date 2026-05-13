@@ -199,7 +199,7 @@ export class Passkeys {
     let verification = await verifyRegistrationResponse({
       response: input.credential,
       expectedChallenge: r.challenge,
-      expectedOrigin: 'https://' + hostname(c),
+      expectedOrigin: hostURL(c),
       expectedRPID: cookieDomain(this.c2(c), this.opts.domainLevels),
     })
 
@@ -293,7 +293,7 @@ export class Passkeys {
     let vdata = {
       response: input.credential,
       expectedChallenge: challenge,
-      expectedOrigin: 'https://' + hostname(c),
+      expectedOrigin: hostURL(c),
       expectedRPID: cookieDomain(c, this.opts.domainLevels),
       credential: {
         id: passkey.id,
