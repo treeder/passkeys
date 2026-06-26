@@ -75,9 +75,6 @@ export class SignIn extends LitElement {
   }
 
   render() {
-    if (!this.capable) {
-      return html`Can't do passkeys on this device.`
-    }
     let err = ''
     if (this.error) {
       err = html`<div class="error">${this.error.message}</div>`
@@ -91,6 +88,18 @@ export class SignIn extends LitElement {
 
     let s = ''
     if (this.isLoggedIn()) {
+      if (!this.capable) {
+        return html`
+          <div class="flex col g24 aic" style="min-width: 400px; padding-top: 40px;">
+            ${err}
+            <div>
+              You are signed in.<br /><br />
+              <a href="${this.afterLoginHref}">Continue to dashboard</a>.
+            </div>
+          </div>
+        `
+      }
+
       s = html` <div class="flex col g24 aic" style="min-width: 400px; padding-top: 40px;">
         ${err}
         ${this.hasPasskey
@@ -130,12 +139,16 @@ export class SignIn extends LitElement {
           id="email"
           @keyup=${this.keyUpHandler}
           required
-          autocomplete="webauthn"></md-text-field>
+          autocomplete="${this.capable ? 'webauthn' : 'email'}"></md-text-field>
         <md-button color="filled" @click=${this.emailStart}>Continue</md-button>
-        <div>
-          <hr />
-        </div>
-        <md-button color="filled" @click=${this.signin}>Sign in with Passkey</md-button>
+        ${this.capable
+          ? html`
+              <div>
+                <hr />
+              </div>
+              <md-button color="filled" @click=${this.signin}>Sign in with Passkey</md-button>
+            `
+          : ''}
       </div>
     `
   }
