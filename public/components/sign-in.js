@@ -90,7 +90,7 @@ export class SignIn extends LitElement {
     if (this.isLoggedIn()) {
       if (!this.capable) {
         return html`
-          <div class="flex col g24 aic" style="min-width: 400px; padding-top: 40px;">
+          <div class="flex col g24 aic" style="width: 100%; max-width: 400px; box-sizing: border-box; padding-top: 40px;">
             ${err}
             <div>
               You are signed in.<br /><br />
@@ -100,7 +100,7 @@ export class SignIn extends LitElement {
         `
       }
 
-      s = html` <div class="flex col g24 aic" style="min-width: 400px; padding-top: 40px;">
+      s = html` <div class="flex col g24 aic" style="width: 100%; max-width: 400px; box-sizing: border-box; padding-top: 40px;">
         ${err}
         ${this.hasPasskey
           ? html`
@@ -129,7 +129,7 @@ export class SignIn extends LitElement {
 
     return html`
       ${s}
-      <div style="display: flex; flex-direction: column; gap: 24px; min-width: 400px; padding-top: 40px;">
+      <div style="display: flex; flex-direction: column; gap: 24px; width: 100%; max-width: 400px; box-sizing: border-box; padding-top: 40px;">
         ${err}
         <!-- <input type="text" id="email" autocomplete="webauthn"> -->
         <md-text-field
