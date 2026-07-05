@@ -49,8 +49,9 @@ async function setupUserSession(c, sessionID) {
 }
 
 export async function getUserByEmail(email) {
+  const cleanEmail = email ? email.trim().toLowerCase() : ''
   return {
-    id: email,
-    email: email,
+    id: cleanEmail,
+    email: cleanEmail,
   }
 }

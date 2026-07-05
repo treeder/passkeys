@@ -51,6 +51,9 @@ export class Passkeys {
 
   async emailStart(c) {
     const input = await c.request.json()
+    if (input.email) {
+      input.email = input.email.trim().toLowerCase()
+    }
 
     // todo: callback to let implementor create a user
     let userId = null

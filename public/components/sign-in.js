@@ -174,7 +174,7 @@ export class SignIn extends LitElement {
     if (!emailF.reportValidity()) {
       return
     }
-    let email = emailF.value
+    let email = emailF.value.trim().toLowerCase()
     console.log('email:', email)
     try {
       let r = await api(`${this.baseURL}/email/start`, {
