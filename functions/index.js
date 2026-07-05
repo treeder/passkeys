@@ -2,9 +2,7 @@ import { parse } from 'cookie-es'
 import { html } from 'rend'
 
 export async function onRequest(c) {
-  // console.log("data:", c.data)
   let cookies = parse(c.request.headers.get('cookie') || '')
-  console.log(cookies)
   return c.data.rend.html({
     main: render,
     name: cookies.userId || 'World',

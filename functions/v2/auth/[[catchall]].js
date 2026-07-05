@@ -4,7 +4,6 @@ import { hostURL } from '../../../src/utils.js'
 
 export async function onRequest(c) {
   let p = c.params.catchall
-  console.log('CATCHALL', p)
   let passkeys = new Passkeys({
     appName: 'Passkeys demo',
     baseURL: `${hostURL(c)}/v2/auth`,

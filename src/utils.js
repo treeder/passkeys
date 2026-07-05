@@ -40,7 +40,6 @@ export function cookieDomain(c, domainLevels) {
   let h = hostname(c)
   if (domainLevels) {
     const sliced = sliceDomain(h, domainLevels)
-    console.log('cookieDomain: ', { h, sliced, domainLevels })
     return sliced
   }
   return h

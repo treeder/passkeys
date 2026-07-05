@@ -228,7 +228,6 @@ export class Passkeys {
       // Whether the passkey has been backed up in some way
       backedUp: credentialBackedUp,
     }
-    console.log('storing at', `passkeys-${newPasskey.id}`)
     await this.opts.kv.put(`passkeys-${newPasskey.id}`, JSON.stringify(newPasskey))
 
     // also store all passkeys for user to find them later

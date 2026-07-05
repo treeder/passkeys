@@ -46,14 +46,11 @@ export class SignIn extends LitElement {
 
   async checkCapabilities() {
     if (window.PublicKeyCredential) {
-      console.log('PublicKeyCredential is available')
       this.capable = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
-      console.log('capable:', this.capable)
     }
     if (!this.capable) return
 
     if (!this.isLoggedIn()) {
-      console.log('not logged in, starting conditional UI')
       this.signin2(true) // to start conditional UI
     } else {
       // see if we have a passkey
@@ -62,13 +59,12 @@ export class SignIn extends LitElement {
           method: 'POST',
           body: {},
         })
-        console.log('r:', r)
         if (r.numPasskeys > 0) {
           // this.success = { message: "You already have a pass key!" }
           this.hasPasskey = true
         }
       } catch (e) {
-        console.log('e:', e)
+        console.error(e)
         // this.error = e
       }
     }
@@ -168,23 +164,20 @@ export class SignIn extends LitElement {
   }
 
   async emailStart() {
-    console.log('continue')
     this.error = null
     let emailF = this.renderRoot.getElementById('email')
     if (!emailF.reportValidity()) {
       return
     }
     let email = emailF.value.trim().toLowerCase()
-    console.log('email:', email)
     try {
       let r = await api(`${this.baseURL}/email/start`, {
         method: 'POST',
         body: { email: email },
       })
-      console.log('r:', r)
       this.success = r
     } catch (e) {
-      console.log('e:', e)
+      console.error(e)
       this.error = e
       return
     }
@@ -196,7 +189,6 @@ export class SignIn extends LitElement {
   }
 
   async signin2(conditionalUI = false) {
-    console.log('conditionalUI:', conditionalUI)
     this.error = null
     let challenge
     try {
@@ -204,7 +196,6 @@ export class SignIn extends LitElement {
         method: 'POST',
         body: {},
       })
-      console.log('challenge:', challenge)
 
       // Pass the options to the authenticator and wait for a response
       let cred
@@ -214,12 +205,9 @@ export class SignIn extends LitElement {
           useBrowserAutofill: conditionalUI,
           verifyBrowserAutofillInput: false,
         })
-        // console.log('CRED:', cred)
-        console.log('USER ID FROM CRED, aka userHandle:', cred.response.userHandle)
       } catch (e) {
         if (conditionalUI) {
           if (e.name == 'AbortError') {
-            console.log('ignoring conditional abort', e)
             return
           }
         }
@@ -232,7 +220,6 @@ export class SignIn extends LitElement {
           credential: cred,
         },
       })
-      console.log('finish r:', r)
       if (!r.verified) {
         this.error = { message: 'Not verified' }
       } else {
@@ -240,7 +227,7 @@ export class SignIn extends LitElement {
       }
       window.location.href = '/'
     } catch (e) {
-      console.log('e:', e)
+      console.error(e)
       if (!(e.message.includes('autofill') || e.message.includes('autocomplete'))) {
         this.error = e
       }
@@ -256,14 +243,12 @@ export class SignIn extends LitElement {
         method: 'POST',
         body: {},
       })
-      console.log('regOptions:', regOptions)
     } catch (e) {
-      console.log('e:', e)
+      console.error(e)
       this.error = e
       return
     }
     let userId = regOptions.user.id
-    console.log('USER ID FROM regOptions:', userId)
 
     let attResp = null
     try {
@@ -273,7 +258,7 @@ export class SignIn extends LitElement {
         // useAutoRegister: true, // this errors with NotAllowedError sometimes...
       })
     } catch (error) {
-      console.log('error:', error)
+      console.error(error)
       this.error = error
       throw error
     }
@@ -286,7 +271,6 @@ export class SignIn extends LitElement {
           userId: userId,
         },
       })
-      console.log('finish r:', r)
       if (!r.verified) {
         this.error = { message: 'Not verified' }
       } else {
@@ -297,7 +281,7 @@ export class SignIn extends LitElement {
         }
       }
     } catch (e) {
-      console.log('e:', e)
+      console.error(e)
       this.error = e
       return
     }

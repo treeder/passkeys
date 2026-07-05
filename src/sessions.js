@@ -14,7 +14,6 @@ export async function getSession(c) {
 }
 
 export async function getSessionByID(c, sessionID) {
-  // console.log("get session cookie:", sessionID)
   if (!sessionID) {
     return {}
     // throw new Error("session not found: no session cookie")
@@ -39,7 +38,6 @@ export async function setSession(c, sessionData) {
   const cookie = c.request.headers.get('cookie') || ''
   let c2 = parse(cookie)
   let sessionID = c2.session
-  console.log('set session sessionID:', sessionID)
   return await putSession(c, sessionID, sessionData)
 }
 
@@ -50,7 +48,6 @@ async function putSession(c, sessionID, sessionData, options = {}) {
   sessionData.id = sessionID
   let maxAge = 60 * 60 * 24 * 365
   let k = `session-${sessionID}`
-  console.log('PUTTING SESSION:', k, sessionData)
   await c.kv.put(k, JSON.stringify(sessionData), { expirationTtl: maxAge })
   sessions[sessionID] = sessionData
   let cookies = [

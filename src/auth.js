@@ -40,7 +40,6 @@ async function setupUserSession(c, sessionID) {
     throw new APIError('Session not found', { status: 401 })
   }
   let session = JSON.parse(r)
-  // console.log("SESSION:", session)
   c.data.userId = session.userId
   c.data.user = {
     id: session.userId,
