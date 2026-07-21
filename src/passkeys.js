@@ -105,11 +105,9 @@ export class Passkeys {
   async emailVerify(c) {
     const { searchParams } = new URL(c.request.url)
     let token = searchParams.get('token')
-    this.opts.logger.log('/auth/verify', token)
     // we're checking if this token exists in the kv store, if so, then it's verified
     let r = await this.opts.kv.get(`email-token-${token}`)
     if (!r) throw new APIError('auth token not found, please try signing in again', { status: 401 })
-    this.opts.logger.log('VERIFY R:', r)
     let rr = JSON.parse(r)
 
     // let user = await this.opts.getUserByEmail(rr.email)
@@ -133,9 +131,7 @@ export class Passkeys {
   }
 
   async new(c) {
-    this.opts.logger.log('/passkeys/new')
     let sess = await getSession(this.c2(c))
-    this.opts.logger.log('sessionData:', sess)
 
     let options = {
       rpName: this.opts.appName,
@@ -162,7 +158,6 @@ export class Passkeys {
         // authenticatorAttachment: 'platform',
       },
     }
-    this.opts.logger.log('REG OPTIONS:', options)
     const res = await generateRegistrationOptions(options)
 
     await this.putChallenge(c, sess.userId, sess.email, res.challenge)
@@ -172,8 +167,7 @@ export class Passkeys {
 
   async putChallenge(c, userId, email, challenge) {
     let key = `challenge-${email}`
-    this.opts.logger.log('CHALLENGE. key:', key)
-    let r = await this.opts.kv.put(
+    await this.opts.kv.put(
       key,
       JSON.stringify({
         challenge: challenge,
@@ -182,7 +176,6 @@ export class Passkeys {
       }),
       { expirationTtl: 60 * 60 },
     )
-    this.opts.logger.log('kv r:', r)
   }
 
   async create(c) {
@@ -190,23 +183,17 @@ export class Passkeys {
 
     let userId = input.userId
     userId = isoBase64URL.toUTF8String(userId)
-    this.opts.logger.log('userId 2:', userId)
 
     let sess = await getSession(this.c2(c))
-    this.opts.logger.log('sessionData:', sess)
 
     let r = await this.opts.kv.get(`challenge-${sess.email}`)
-    this.opts.logger.log('kv r:', r)
     r = JSON.parse(r)
-    this.opts.logger.log('r:', r)
     let verification = await verifyRegistrationResponse({
       response: input.credential,
       expectedChallenge: r.challenge,
       expectedOrigin: hostURL(c),
       expectedRPID: cookieDomain(this.c2(c), this.opts.domainLevels),
     })
-
-    this.opts.logger.log('verification:', verification)
     if (!verification.verified) return Response.json({ error: { message: 'verification failed' } }, { status: 401 })
 
     // store authenticator info in db
@@ -242,7 +229,6 @@ export class Passkeys {
   }
 
   async start(c) {
-    this.opts.logger.log('/passkeys/start')
     const options = await generateAuthenticationOptions({
       rpID: cookieDomain(this.c2(c), this.opts.domainLevels),
       // Require users to use a previously-registered authenticator
@@ -272,22 +258,17 @@ export class Passkeys {
 
   async verify(c) {
     let input = await c.request.json()
-    this.opts.logger.log('VERIFY INPUT:', input)
     let userId = input.credential.response.userHandle
-    this.opts.logger.log('userId from userHandle:', userId)
     userId = isoBase64URL.toUTF8String(userId)
-    this.opts.logger.log('userId 2:', userId)
 
     let passkey = await this.opts.kv.get(`passkeys-${input.credential.id}`)
     if (!passkey) {
       throw new Error(`Could not find passkey for user ${userId}`)
     }
     passkey = JSON.parse(passkey)
-    this.opts.logger.log('passkey:', passkey.id)
     const shallowCopy = { ...passkey }
 
     let sessionData = await getSession(this.c2(c))
-    this.opts.logger.log('sessionData:', sessionData)
     let challenge = sessionData.challenge
 
     passkey.id = isoBase64URL.fromBuffer(passkey.id) // Uint8Array.from(Object.values(authenticator.credentialID))
@@ -312,7 +293,6 @@ export class Passkeys {
       return Response.json({ error: { message: error.message } }, { status: 401 })
     }
 
-    this.opts.logger.log('verification:', verification)
     if (!verification.verified) return Response.json({ error: { message: 'verification failed' } }, { status: 401 })
 
     // update counter
@@ -340,7 +320,6 @@ export class Passkeys {
 
   async check(c) {
     let sess = await getSession(this.c2(c))
-    this.opts.logger.log('sessionData:', sess)
     if (!sess) {
       throw new APIError(`Not logged in`, { status: 401 })
     }
@@ -349,7 +328,6 @@ export class Passkeys {
       throw new APIError(`Could not find a passkey for user ${sess.userId}`, { status: 404 })
     }
     user = JSON.parse(user)
-    this.opts.logger.log('user:', user)
     return Response.json({ message: `${user.passkeys.length} passkeys found`, numPasskeys: user.passkeys.length })
   }
 }
