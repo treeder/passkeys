@@ -129,7 +129,7 @@ If you'd like to use a CDN rather than your bundler, the above part stays the sa
       "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3/",
       "material/": "https://cdn.jsdelivr.net/gh/treeder/material@2.11/",
       "api": "https://cdn.jsdelivr.net/gh/treeder/api@1/api.js",
-      "passkeys/": "https://cdn.jsdelivr.net/gh/treeder/passkeys@3/"
+      "passkeys/": "https://cdn.jsdelivr.net/gh/treeder/passkeys@4/"
     }
   }
 </script>
