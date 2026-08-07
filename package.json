@@ -1,6 +1,6 @@
 {
   "name": "passkeys",
-  "version": "4.0.4",
+  "version": "4.1.0",
   "type": "module",
   "description": "",
   "main": "passkeys.js",
@@ -14,16 +14,16 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@simplewebauthn/server": "^13.0.1",
+    "@simplewebauthn/server": "^13.3.2",
     "api": "treeder/api#semver:^1",
     "console-logger": "github:treeder/console-logger#semver:^1",
-    "cookie-es": "^2.0.0",
+    "cookie-es": "^3.1.1",
     "flaregun": "github:treeder/flaregun#semver:^3",
-    "nanoid": "^5.0.7",
+    "nanoid": "^6.0.1",
     "rend": "github:treeder/rend#semver:^1"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
+    "prettier": "^3.9.6",
     "testkit": "github:treeder/testkit#semver:^1"
   },
   "prettier": {
