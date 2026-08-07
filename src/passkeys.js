@@ -132,13 +132,14 @@ export class Passkeys {
 
   async new(c) {
     let sess = await getSession(this.c2(c))
+    let emailOrId = sess.email || sess.userId
 
     let options = {
       rpName: this.opts.appName,
       rpID: cookieDomain(this.c2(c), this.opts.domainLevels),
       userID: isoUint8Array.fromUTF8String(sess.userId), // isoBase64URL.fromBuffer(c.req.userId),
-      userName: sess.email,
-      userDisplayName: sess.email, // - can add this for a real username
+      userName: emailOrId || 'user',
+      userDisplayName: emailOrId || 'user', // - can add this for a real username
       /** @type {'none'} */
       attestationType: 'none',
       // Prevent users from re-registering existing authenticators
@@ -153,26 +154,26 @@ export class Passkeys {
       authenticatorSelection: {
         /** @type {'required'} */
         residentKey: 'required',
-        /** @type {'required'} */
-        userVerification: 'required',
+        /** @type {'preferred'} */
+        userVerification: 'preferred',
         // authenticatorAttachment: 'platform',
       },
     }
     const res = await generateRegistrationOptions(options)
 
-    await this.putChallenge(c, sess.userId, sess.email, res.challenge)
+    await this.putChallenge(c, sess.userId, emailOrId, res.challenge)
 
     return Response.json(res)
   }
 
-  async putChallenge(c, userId, email, challenge) {
-    let key = `challenge-${email}`
+  async putChallenge(c, userId, emailOrId, challenge) {
+    let key = `challenge-${emailOrId}`
     await this.opts.kv.put(
       key,
       JSON.stringify({
         challenge: challenge,
         userId: userId,
-        username: email,
+        username: emailOrId,
       }),
       { expirationTtl: 60 * 60 },
     )
@@ -185,14 +186,25 @@ export class Passkeys {
     userId = isoBase64URL.toUTF8String(userId)
 
     let sess = await getSession(this.c2(c))
+    let emailOrId = sess.email || sess.userId || userId
 
-    let r = await this.opts.kv.get(`challenge-${sess.email}`)
+    let r = await this.opts.kv.get(`challenge-${emailOrId}`)
+    if (!r && sess.userId) {
+      r = await this.opts.kv.get(`challenge-${sess.userId}`)
+    }
+    if (!r) {
+      throw new APIError('Registration challenge expired or missing. Please try again.', { status: 400 })
+    }
     r = JSON.parse(r)
+    if (!r || !r.challenge) {
+      throw new APIError('Invalid registration challenge. Please try again.', { status: 400 })
+    }
     let verification = await verifyRegistrationResponse({
       response: input.credential,
       expectedChallenge: r.challenge,
       expectedOrigin: hostURL(c),
       expectedRPID: cookieDomain(this.c2(c), this.opts.domainLevels),
+      requireUserVerification: false,
     })
     if (!verification.verified) return Response.json({ error: { message: 'verification failed' } }, { status: 401 })
 
@@ -284,6 +296,7 @@ export class Passkeys {
         counter: passkey.counter,
         transports: passkey.transports,
       },
+      requireUserVerification: false,
     }
     let verification = null
     try {
@@ -320,14 +333,15 @@ export class Passkeys {
 
   async check(c) {
     let sess = await getSession(this.c2(c))
-    if (!sess) {
+    if (!sess || !sess.userId) {
       throw new APIError(`Not logged in`, { status: 401 })
     }
     let user = await this.opts.kv.get(`users-${sess.userId}`)
     if (!user) {
-      throw new APIError(`Could not find a passkey for user ${sess.userId}`, { status: 404 })
+      return Response.json({ message: '0 passkeys found', numPasskeys: 0 })
     }
     user = JSON.parse(user)
-    return Response.json({ message: `${user.passkeys.length} passkeys found`, numPasskeys: user.passkeys.length })
+    const numPasskeys = user.passkeys ? user.passkeys.length : 0
+    return Response.json({ message: `${numPasskeys} passkeys found`, numPasskeys })
   }
 }
