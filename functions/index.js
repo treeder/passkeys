@@ -15,8 +15,10 @@ function render(d) {
   return html`
     <h2>Hello ${d.name}!</h2>
 
-    ${d.isLoggedIn
-      ? html`You are logged in. <a href="/dashboard">Go to dashboard</a>`
-      : html`Please sign in to continue.`}
+    ${
+      d.isLoggedIn
+        ? html`You are logged in. <a href="/dashboard">Go to dashboard</a>`
+        : html`Please sign in to continue.`
+    }
   `
 }
