@@ -134,6 +134,22 @@ export class Passkeys {
     let sess = await getSession(this.c2(c))
     let emailOrId = sess.email || sess.userId
 
+    let user = null
+    if (sess.userId) {
+      let r = await this.opts.kv.get(`users-${sess.userId}`)
+      if (r) {
+        user = JSON.parse(r)
+      }
+    }
+
+    const excludeCredentials =
+      user && Array.isArray(user.passkeys)
+        ? user.passkeys.map((authenticator) => ({
+            id: authenticator.id,
+            transports: authenticator.transports,
+          }))
+        : []
+
     let options = {
       rpName: this.opts.appName,
       rpID: cookieDomain(this.c2(c), this.opts.domainLevels),
@@ -142,14 +158,7 @@ export class Passkeys {
       userDisplayName: emailOrId || 'user', // - can add this for a real username
       /** @type {'none'} */
       attestationType: 'none',
-      // Prevent users from re-registering existing authenticators
-      // excludeCredentials: userAuthenticators.map(authenticator => ({
-      //     id: authenticator.credentialID,
-      //     type: 'public-key',
-      //     // Optional
-      //     transports: authenticator.transports,
-      // })),
-      excludeCredentials: [],
+      excludeCredentials,
       // See "Guiding use of authenticators via authenticatorSelection" below
       authenticatorSelection: {
         /** @type {'required'} */
@@ -230,10 +239,29 @@ export class Passkeys {
     await this.opts.kv.put(`passkeys-${newPasskey.id}`, JSON.stringify(newPasskey))
 
     // also store all passkeys for user to find them later
-    let user = {
-      id: userId,
-      email: sess.email,
-      passkeys: [newPasskey],
+    let user = null
+    let rUser = await this.opts.kv.get(`users-${userId}`)
+    if (rUser) {
+      user = JSON.parse(rUser)
+    }
+    if (!user) {
+      user = {
+        id: userId,
+        email: sess.email,
+        passkeys: [],
+      }
+    }
+    if (!Array.isArray(user.passkeys)) {
+      user.passkeys = []
+    }
+    if (sess.email && !user.email) {
+      user.email = sess.email
+    }
+    const existingIndex = user.passkeys.findIndex((pk) => pk.id === newPasskey.id)
+    if (existingIndex >= 0) {
+      user.passkeys[existingIndex] = newPasskey
+    } else {
+      user.passkeys.push(newPasskey)
     }
     await this.opts.kv.put(`users-${userId}`, JSON.stringify(user))
 
@@ -310,7 +338,19 @@ export class Passkeys {
 
     // update counter
     shallowCopy.counter = verification.authenticationInfo.newCounter
-    await this.opts.kv.put(`passkeys-${passkey.id}`, JSON.stringify(shallowCopy))
+    await this.opts.kv.put(`passkeys-${shallowCopy.id}`, JSON.stringify(shallowCopy))
+
+    let userStr = await this.opts.kv.get(`users-${userId}`)
+    if (userStr) {
+      let user = JSON.parse(userStr)
+      if (Array.isArray(user.passkeys)) {
+        let pk = user.passkeys.find((p) => p.id === shallowCopy.id)
+        if (pk) {
+          pk.counter = shallowCopy.counter
+          await this.opts.kv.put(`users-${userId}`, JSON.stringify(user))
+        }
+      }
+    }
 
     if (this.opts.passkeyVerified) {
       await this.opts.passkeyVerified({ userId, email: sessionData.email })
