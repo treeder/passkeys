@@ -1,6 +1,6 @@
 {
   "name": "passkeys",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "type": "module",
   "description": "",
   "main": "passkeys.js",
