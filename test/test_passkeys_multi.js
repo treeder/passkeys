@@ -11,6 +11,9 @@ class MockKV {
   async put(key, value) {
     this.store.set(key, value)
   }
+  async delete(key) {
+    this.store.delete(key)
+  }
 }
 
 async function runTests() {
@@ -125,6 +128,69 @@ async function runTests() {
     const data = await res.json()
     assert.strictEqual(data.numPasskeys, 2)
     console.log('✔ Test 5 passed: check() returns 2 passkeys')
+  }
+
+  // Test 6: Passkeys.list returns user's passkeys with metadata
+  {
+    const unauthC = {
+      request: {
+        url: 'http://localhost:8788/passkeys/list',
+        headers: new Headers(),
+        json: async () => ({}),
+      },
+      data: {},
+      env: {},
+    }
+    const unauthRes = await passkeys.list(unauthC)
+    assert.strictEqual(unauthRes.status, 401)
+
+    const c = createMockContext()
+    const res = await passkeys.list(c)
+    assert.strictEqual(res.status, 200)
+    const data = await res.json()
+    assert.strictEqual(Array.isArray(data.passkeys), true)
+    assert.strictEqual(data.passkeys.length, 2)
+    assert.strictEqual(data.passkeys[0].id, 'cred-1')
+    assert.strictEqual(data.passkeys[0].name, 'Security Key')
+    assert.strictEqual(data.passkeys[1].id, 'cred-2')
+    console.log('✔ Test 6 passed: list() handles unauthorized and returns formatted passkeys')
+  }
+
+  // Test 7: Passkeys.delete validates ownership and removes passkey
+  {
+    await kv.put('passkeys-cred-1', JSON.stringify({ id: 'cred-1' }))
+    await kv.put('passkeys-cred-2', JSON.stringify({ id: 'cred-2' }))
+
+    // Missing passkey ID returns 400
+    const emptyC = createMockContext(sessionData, {})
+    const emptyRes = await passkeys.delete(emptyC)
+    assert.strictEqual(emptyRes.status, 400)
+
+    // Non-existent passkey returns 404
+    const notFoundC = createMockContext(sessionData, { id: 'non-existent' })
+    const notFoundRes = await passkeys.delete(notFoundC)
+    assert.strictEqual(notFoundRes.status, 404)
+
+    // Delete cred-1 via body
+    const deleteC = createMockContext(sessionData, { id: 'cred-1' })
+    const deleteRes = await passkeys.delete(deleteC)
+    assert.strictEqual(deleteRes.status, 200)
+    const deleteData = await deleteRes.json()
+    assert.strictEqual(deleteData.success, true)
+
+    // Verify cred-1 is deleted from KV and user record
+    assert.strictEqual(await kv.get('passkeys-cred-1'), null)
+    const userRaw = await kv.get(`users-${userId}`)
+    const userObj = JSON.parse(userRaw)
+    assert.strictEqual(userObj.passkeys.length, 1)
+    assert.strictEqual(userObj.passkeys[0].id, 'cred-2')
+
+    // Verify check() and list() now reflect 1 passkey
+    const checkRes = await passkeys.check(createMockContext())
+    const checkData = await checkRes.json()
+    assert.strictEqual(checkData.numPasskeys, 1)
+
+    console.log('✔ Test 7 passed: delete() validates ID/ownership, deletes from KV, and updates user record')
   }
 
   console.log('\nAll multi-passkey unit tests passed successfully!')
