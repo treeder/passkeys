@@ -192,7 +192,9 @@ export class Passkeys {
     const input = await c.request.json()
 
     let userId = input.userId
-    userId = isoBase64URL.toUTF8String(userId)
+    try {
+      userId = isoBase64URL.toUTF8String(userId)
+    } catch (e) {}
 
     let sess = await getSession(this.c2(c))
     let emailOrId = sess.email || sess.userId || userId
@@ -225,6 +227,8 @@ export class Passkeys {
       webAuthnUserID: userId,
       // A unique identifier for the credential
       id: credential.id,
+      name: input.name || (credentialDeviceType === 'multiDevice' ? 'Passkey' : 'Security Key'),
+      createdAt: new Date().toISOString(),
       // The public key bytes, used for subsequent authentication signature verification
       publicKey: credential.publicKey,
       // The number of times the authenticator has been used on this site so far
@@ -373,15 +377,84 @@ export class Passkeys {
 
   async check(c) {
     let sess = await getSession(this.c2(c))
-    if (!sess || !sess.userId) {
+    let userId = sess.userId || c.data?.user?.id || c.data?.userID
+    if (!userId) {
       throw new APIError(`Not logged in`, { status: 401 })
     }
-    let user = await this.opts.kv.get(`users-${sess.userId}`)
+    let user = await this.opts.kv.get(`users-${userId}`)
     if (!user) {
       return Response.json({ message: '0 passkeys found', numPasskeys: 0 })
     }
     user = JSON.parse(user)
     const numPasskeys = user.passkeys ? user.passkeys.length : 0
     return Response.json({ message: `${numPasskeys} passkeys found`, numPasskeys })
+  }
+
+  async list(c) {
+    let sess = await getSession(this.c2(c))
+    let userId = sess.userId || c.data?.user?.id || c.data?.userID
+    if (!userId) {
+      return Response.json({ error: { message: 'Unauthorized' } }, { status: 401 })
+    }
+    let userRaw = await this.opts.kv.get(`users-${userId}`)
+    let passkeysList = []
+    if (userRaw) {
+      let parsed = JSON.parse(userRaw)
+      passkeysList = parsed.passkeys || []
+    }
+    return Response.json({
+      passkeys: passkeysList.map((pk) => ({
+        id: pk.id,
+        name: pk.name || (pk.deviceType === 'multiDevice' ? 'Passkey' : 'Security Key'),
+        deviceType: pk.deviceType,
+        backedUp: pk.backedUp,
+        createdAt: pk.createdAt || null,
+        transports: pk.transports || [],
+      })),
+    })
+  }
+
+  async delete(c) {
+    let sess = await getSession(this.c2(c))
+    let userId = sess.userId || c.data?.user?.id || c.data?.userID
+    if (!userId) {
+      return Response.json({ error: { message: 'Unauthorized' } }, { status: 401 })
+    }
+    let passkeyId = c.params?.catchall?.[2] || c.params?.id
+    if (!passkeyId) {
+      try {
+        let req = typeof c.request.clone === 'function' ? c.request.clone() : c.request
+        let body = await req.json()
+        passkeyId = body?.id
+      } catch (e) {}
+    }
+    if (!passkeyId && c.request?.url) {
+      try {
+        const url = new URL(c.request.url)
+        passkeyId = url.searchParams.get('id')
+      } catch (e) {}
+    }
+    if (!passkeyId) {
+      return Response.json({ error: { message: 'Passkey ID is required' } }, { status: 400 })
+    }
+
+    let userRaw = await this.opts.kv.get(`users-${userId}`)
+    if (!userRaw) {
+      return Response.json({ error: { message: 'User not found' } }, { status: 404 })
+    }
+    let userObj = JSON.parse(userRaw)
+    let existingList = userObj.passkeys || []
+    if (!existingList.some((pk) => pk.id === passkeyId)) {
+      return Response.json({ error: { message: 'Passkey not found for user' } }, { status: 404 })
+    }
+
+    await this.opts.kv.delete(`passkeys-${passkeyId}`)
+    userObj.passkeys = existingList.filter((pk) => pk.id !== passkeyId)
+    await this.opts.kv.put(`users-${userId}`, JSON.stringify(userObj))
+    return Response.json({ success: true, message: 'Passkey deleted' })
+  }
+
+  async remove(c) {
+    return await this.delete(c)
   }
 }

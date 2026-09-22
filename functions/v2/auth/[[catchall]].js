@@ -36,6 +36,12 @@ export async function onRequest(c) {
     if (p[1] == 'check') {
       return await passkeys.check(c)
     }
+    if (p[1] == 'list') {
+      return await passkeys.list(c)
+    }
+    if (p[1] == 'delete' || p[1] == 'remove') {
+      return await passkeys.delete(c)
+    }
   }
   return Response.json({})
 }
