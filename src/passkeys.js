@@ -75,6 +75,7 @@ export class Passkeys {
         token,
         email: input.email,
         userId: userId,
+        afterLoginHref: input.afterLoginHref || input.redir || input.redirect,
       }),
       { expirationTtl: 60 * 60 },
     )
@@ -117,7 +118,15 @@ export class Passkeys {
       await this.opts.emailVerified({ email: rr.email, userId: rr.userId })
     }
 
-    let url = this.opts.afterEmailVerifyURL || `${hostURL(c)}/signin`
+    let url =
+      searchParams.get('redir') ||
+      searchParams.get('redirect') ||
+      searchParams.get('afterLoginHref') ||
+      rr.afterLoginHref ||
+      rr.redir ||
+      rr.redirect ||
+      this.opts.afterEmailVerifyURL ||
+      `${hostURL(c)}/signin`
     let headers = new Headers({
       Location: url,
     })

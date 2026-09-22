@@ -193,6 +193,44 @@ async function runTests() {
     console.log('✔ Test 7 passed: delete() validates ID/ownership, deletes from KV, and updates user record')
   }
 
+  // --- Test 8: emailStart & emailVerify preserves afterLoginHref / redir redirect ---
+  {
+    const kv = new MockKV()
+    const passkeys = new Passkeys({
+      kv,
+      appName: 'TestApp',
+      baseURL: 'http://localhost:8787/auth',
+    })
+
+    const cStart = {
+      request: new Request('http://localhost:8787/auth/email/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'user@example.com', afterLoginHref: '/custom-landing' }),
+      }),
+      data: {},
+      cookies: {},
+    }
+
+    const startRes = await passkeys.emailStart(cStart)
+    const startData = await startRes.json()
+    assert(startData.link)
+    const verifyUrl = new URL(startData.link)
+    const token = verifyUrl.searchParams.get('token')
+
+    const cVerify = {
+      request: new Request(`http://localhost:8787/auth/email/verify?token=${token}`),
+      data: {},
+      cookies: {},
+    }
+
+    const verifyRes = await passkeys.emailVerify(cVerify)
+    assert.strictEqual(verifyRes.status, 302)
+    assert.strictEqual(verifyRes.headers.get('Location'), '/custom-landing')
+
+    console.log('✔ Test 8 passed: emailStart and emailVerify preserve afterLoginHref')
+  }
+
   console.log('\nAll multi-passkey unit tests passed successfully!')
 }
 
