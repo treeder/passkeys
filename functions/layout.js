@@ -40,7 +40,7 @@ export function header(d) {
     }
     </script>
     <script>
-      window.user = ${JSON.stringify(d.user || null)}
+      window.user = ${JSON.stringify(d.user || null).replace(/</g, '\\u003c')}
     </script>
 
   </head>
