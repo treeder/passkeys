@@ -8,10 +8,13 @@ export class SignInButton extends LitElement {
     // css`p { color: blue }`
   ]
 
-  static properties = {}
+  static properties = {
+    user: { type: Object },
+  }
 
   constructor() {
     super()
+    this.user = null
   }
 
   connectedCallback() {
@@ -25,10 +28,12 @@ export class SignInButton extends LitElement {
     }
   }
   isLoggedIn() {
-    return document.cookie.includes('userId=')
+    const user = this.user || (typeof window !== 'undefined' ? window.user : null)
+    return !!(user && (user.id || user.email))
   }
   async signOut() {
     await signOut()
+    if (typeof window !== 'undefined') window.user = null
     window.location.href = '/'
   }
 }

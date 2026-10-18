@@ -39,6 +39,9 @@ export function header(d) {
       }
     }
     </script>
+    <script>
+      window.user = ${JSON.stringify(d.user || null)}
+    </script>
 
   </head>
 <body>

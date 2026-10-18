@@ -3,6 +3,7 @@ import { html } from 'rend'
 export async function onRequest(c) {
   return c.data.rend.html({
     main: render,
+    user: c.data.user,
     name: 'World',
   })
 }
