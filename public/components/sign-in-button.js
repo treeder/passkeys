@@ -1,5 +1,6 @@
 import { html, css, LitElement } from 'lit'
 import 'material/buttons/button.js'
+import state from 'state'
 import { signOut } from '../js/signout.js'
 
 export class SignInButton extends LitElement {
@@ -19,6 +20,19 @@ export class SignInButton extends LitElement {
 
   connectedCallback() {
     super.connectedCallback()
+    if (this.user) {
+      let u = this.user
+      if (typeof u === 'string') {
+        try {
+          u = JSON.parse(u)
+        } catch (e) {
+          u = null
+        }
+      }
+      if (u && (u.id || u.email)) {
+        state.set('user', u, { skipStorage: true })
+      }
+    }
   }
   render() {
     if (this.isLoggedIn()) {
@@ -28,12 +42,19 @@ export class SignInButton extends LitElement {
     }
   }
   isLoggedIn() {
-    const user = this.user || (typeof window !== 'undefined' ? window.user : null)
+    let user = this.user || state.get('user')
+    if (typeof user === 'string') {
+      try {
+        user = JSON.parse(user)
+      } catch (e) {
+        user = null
+      }
+    }
     return !!(user && (user.id || user.email))
   }
   async signOut() {
+    state.delete('user')
     await signOut()
-    if (typeof window !== 'undefined') window.user = null
     window.location.href = '/'
   }
 }

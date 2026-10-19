@@ -17,7 +17,11 @@ function render(d) {
     </script>
 
     <div class="flex jcc w100">
-      <sign-in baseURL="/v2/auth"></sign-in>
+      ${
+        d.user
+          ? html`<sign-in baseURL="/v2/auth" user="${JSON.stringify(d.user).replace(/"/g, '&quot;')}"></sign-in>`
+          : html`<sign-in baseURL="/v2/auth"></sign-in>`
+      }
     </div>
   `
 }

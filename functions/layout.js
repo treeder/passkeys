@@ -35,12 +35,10 @@ export function header(d) {
         "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3/lit-html.js",
         "lit-html/": "https://cdn.jsdelivr.net/npm/lit-html@3/",
         "material/": "https://cdn.jsdelivr.net/gh/treeder/material@2.11/",
-        "api": "https://cdn.jsdelivr.net/gh/treeder/api@1/api.js"
+        "api": "https://cdn.jsdelivr.net/gh/treeder/api@1/api.js",
+        "state": "https://cdn.jsdelivr.net/gh/treeder/state@3/state.js"
       }
     }
-    </script>
-    <script>
-      window.user = ${JSON.stringify(d.user || null).replace(/</g, '\\u003c')}
     </script>
 
   </head>
@@ -64,7 +62,11 @@ function nav(d) {
           <div>
               <!-- Right stuff -->
               <div>
-                <sign-in-button></sign-in-button>
+                ${
+                  d.user
+                    ? `<sign-in-button user="${JSON.stringify(d.user).replace(/"/g, '&quot;')}"></sign-in-button>`
+                    : `<sign-in-button></sign-in-button>`
+                }
               </div>
               
           </div>
