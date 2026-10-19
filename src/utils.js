@@ -64,13 +64,5 @@ export function deleteCookies(c, options = {}) {
       domain: cookieDomain(c, options.domainLevels),
     }),
   )
-  cookies.push(
-    serialize('userId', '', {
-      path: '/',
-      maxAge: 0,
-      secure: true,
-      domain: cookieDomain(c, options.domainLevels),
-    }),
-  )
   return cookies
 }

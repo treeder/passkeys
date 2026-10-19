@@ -1,13 +1,12 @@
-import { parse } from 'cookie-es'
 import { html } from 'rend'
 
 export async function onRequest(c) {
-  let cookies = parse(c.request.headers.get('cookie') || '')
   return c.data.rend.html({
     main: render,
-    name: cookies.userId || 'World',
-    userId: cookies.userId,
-    isLoggedIn: cookies.session,
+    user: c.data.user,
+    name: c.data.user?.id || 'World',
+    userId: c.data.user?.id,
+    isLoggedIn: Boolean(c.data.user?.id),
   })
 }
 

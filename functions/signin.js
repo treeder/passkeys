@@ -3,6 +3,7 @@ import { html } from 'rend'
 export async function onRequest(c) {
   return c.data.rend.html({
     main: render,
+    user: c.data.user,
     name: 'World',
   })
 }
@@ -16,7 +17,13 @@ function render(d) {
     </script>
 
     <div class="flex jcc w100">
-      <sign-in baseURL="/v2/auth"></sign-in>
+      ${
+        d.user
+          ? html`<sign-in
+              baseURL="/v2/auth"
+              user="${JSON.stringify(d.user).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}"></sign-in>`
+          : html`<sign-in baseURL="/v2/auth"></sign-in>`
+      }
     </div>
   `
 }

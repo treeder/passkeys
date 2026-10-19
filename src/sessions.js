@@ -59,17 +59,6 @@ async function putSession(c, sessionID, sessionData, options = {}) {
       maxAge: maxAge,
     }),
   ]
-  if (sessionData.userId) {
-    cookies.push(
-      serialize('userId', sessionData.userId, {
-        path: '/',
-        secure: true,
-        domain: cookieDomain(c, options.domainLevels),
-        // httpOnly: true,
-        maxAge: maxAge,
-      }),
-    )
-  }
   return {
     sessionID,
     cookies,
