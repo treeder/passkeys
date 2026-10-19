@@ -64,7 +64,7 @@ function nav(d) {
               <div>
                 ${
                   d.user
-                    ? `<sign-in-button user="${JSON.stringify(d.user).replace(/"/g, '&quot;')}"></sign-in-button>`
+                    ? `<sign-in-button user="${JSON.stringify(d.user).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}"></sign-in-button>`
                     : `<sign-in-button></sign-in-button>`
                 }
               </div>

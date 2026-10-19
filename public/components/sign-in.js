@@ -175,7 +175,15 @@ export class SignIn extends LitElement {
   }
 
   isLoggedIn() {
-    let user = this.user || state.get('user')
+    let u = this.user
+    if (typeof u === 'string') {
+      try {
+        u = JSON.parse(u)
+      } catch (e) {
+        u = null
+      }
+    }
+    let user = u && (u.id || u.email) ? u : state.get('user')
     if (typeof user === 'string') {
       try {
         user = JSON.parse(user)
@@ -189,6 +197,7 @@ export class SignIn extends LitElement {
   signOut() {
     state.delete('user')
     signOut()
+    window.location.href = '/'
   }
 
   keyUpHandler(e) {
