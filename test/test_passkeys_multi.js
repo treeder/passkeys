@@ -303,6 +303,9 @@ async function runTests() {
 
     const newSession = JSON.parse(await kv.get(`session-${newSessionId}`))
     assert.strictEqual(newSession.userId, 'rotate@example.com')
+    assert.strictEqual(newSession.email, 'rotate@example.com')
+    assert.strictEqual(newSession.token, undefined, 'consumed email token should not persist in session')
+    assert.strictEqual(newSession.afterLoginHref, undefined, 'one-time redirect should not persist in session')
     assert.strictEqual(
       newSession.challenge,
       undefined,

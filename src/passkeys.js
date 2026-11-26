@@ -119,7 +119,11 @@ export class Passkeys {
     }
 
     // let user = await this.opts.getUserByEmail(rr.email)
-    let { cookies } = await setSession(this.c2(c), rr, { domainLevels: this.opts.domainLevels, rotate: true })
+    let { cookies } = await setSession(
+      this.c2(c),
+      { userId: rr.userId, email: rr.email },
+      { domainLevels: this.opts.domainLevels, rotate: true },
+    )
 
     if (this.opts.emailVerified) {
       await this.opts.emailVerified({ email: rr.email, userId: rr.userId })
