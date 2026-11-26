@@ -110,9 +110,18 @@ export class Passkeys {
     let r = await this.opts.kv.get(`email-token-${token}`)
     if (!r) throw new APIError('auth token not found, please try signing in again', { status: 401 })
     let rr = JSON.parse(r)
+    if (typeof this.opts.kv.delete === 'function') {
+      try {
+        await this.opts.kv.delete(`email-token-${token}`)
+      } catch (e) {}
+    }
 
     // let user = await this.opts.getUserByEmail(rr.email)
-    let { cookies } = await updateSession(this.c2(c), rr, { domainLevels: this.opts.domainLevels })
+    let { cookies } = await updateSession(
+      this.c2(c),
+      { ...rr, challenge: undefined },
+      { domainLevels: this.opts.domainLevels, rotate: true },
+    )
 
     if (this.opts.emailVerified) {
       await this.opts.emailVerified({ email: rr.email, userId: rr.userId })
@@ -129,6 +138,7 @@ export class Passkeys {
       `${hostURL(c)}/signin`
     let headers = new Headers({
       Location: url,
+      'Cache-Control': 'private, no-store',
     })
     for (let cookie of cookies) {
       headers.append('Set-Cookie', cookie)
@@ -373,11 +383,15 @@ export class Passkeys {
       this.c2(c),
       {
         userId: userId,
+        challenge: undefined,
       },
-      { domainLevels: this.opts.domainLevels },
+      { domainLevels: this.opts.domainLevels, rotate: true },
     )
 
-    let response = Response.json({ verified: verification.verified })
+    let response = Response.json(
+      { verified: verification.verified },
+      { headers: { 'Cache-Control': 'private, no-store' } },
+    )
     for (let cookie of cookies) {
       response.headers.append('Set-Cookie', cookie)
     }

@@ -214,9 +214,17 @@ export class SignIn extends LitElement {
     }
     let email = emailF.value.trim().toLowerCase()
     try {
+      let body = { email: email }
+      if (
+        this.hasAttribute('afterLoginHref') ||
+        this.hasAttribute('afterloginhref') ||
+        (this.afterLoginHref && this.afterLoginHref !== '/dashboard')
+      ) {
+        body.afterLoginHref = this.afterLoginHref
+      }
       let r = await api(`${this.baseURL}/email/start`, {
         method: 'POST',
-        body: { email: email },
+        body,
       })
       this.success = r
     } catch (e) {
@@ -265,13 +273,13 @@ export class SignIn extends LitElement {
       })
       if (!r.verified) {
         this.error = { message: 'Not verified' }
-      } else {
-        this.success = { message: 'You signed in with a passkey!' }
+        return
       }
-      window.location.href = '/'
+      this.success = { message: 'You signed in with a passkey!' }
+      window.location.href = this.afterLoginHref || '/'
     } catch (e) {
       console.error(e)
-      if (!(e.message.includes('autofill') || e.message.includes('autocomplete'))) {
+      if (!(e.message && (e.message.includes('autofill') || e.message.includes('autocomplete')))) {
         this.error = e
       }
       return

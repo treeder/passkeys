@@ -231,6 +231,102 @@ async function runTests() {
     console.log('✔ Test 8 passed: emailStart and emailVerify preserve afterLoginHref')
   }
 
+  // --- Test 9: getSession always reads fresh KV data without stale in-memory cache ---
+  {
+    const { getSession, updateSession } = await import('../src/sessions.js')
+    const kv = new MockKV()
+    const preAuthSessionId = 'pre-auth-sess-123'
+    const req = new Request('http://localhost:8787/auth/passkeys/start', {
+      headers: { cookie: `session=${preAuthSessionId}` },
+    })
+
+    // First write challenge-only session (no userId)
+    await updateSession({ request: req, kv }, { challenge: 'abc-challenge' })
+    const before = await getSession({ request: req, kv })
+    assert.strictEqual(before.challenge, 'abc-challenge')
+    assert.strictEqual(before.userId, undefined)
+
+    // Simulate another isolate updating KV directly with userId
+    await kv.put(`session-${preAuthSessionId}`, JSON.stringify({ id: preAuthSessionId, userId: 'user-999' }))
+    const after = await getSession({ request: req, kv })
+    assert.strictEqual(after.userId, 'user-999', 'getSession should read updated userId from KV, not a stale cache')
+
+    console.log('✔ Test 9 passed: getSession reads fresh session data from KV without stale cache')
+  }
+
+  // --- Test 10: emailVerify rotates session ID away from pre-auth challenge session and consumes token ---
+  {
+    const kv = new MockKV()
+    const passkeys = new Passkeys({
+      kv,
+      appName: 'TestApp',
+      baseURL: 'http://localhost:8787/auth',
+    })
+
+    // Start passkey challenge first (simulating conditional UI on /signin)
+    const startPasskeyRes = await passkeys.start({
+      request: new Request('http://localhost:8787/auth/passkeys/start', { method: 'POST' }),
+      data: {},
+    })
+    const startCookie = startPasskeyRes.headers.get('Set-Cookie')
+    const oldSessionId = startCookie.match(/session=([^;]+)/)[1]
+    assert(await kv.get(`session-${oldSessionId}`), 'pre-auth session should exist in KV')
+
+    // Start email sign-in
+    const emailStartRes = await passkeys.emailStart({
+      request: new Request('http://localhost:8787/auth/email/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', cookie: `session=${oldSessionId}` },
+        body: JSON.stringify({ email: 'rotate@example.com', afterLoginHref: '/home' }),
+      }),
+      data: {},
+    })
+    const { link } = await emailStartRes.json()
+    const token = new URL(link).searchParams.get('token')
+
+    // Verify email with pre-auth cookie present
+    const verifyRes = await passkeys.emailVerify({
+      request: new Request(`http://localhost:8787/auth/email/verify?token=${token}`, {
+        headers: { cookie: `session=${oldSessionId}` },
+      }),
+      data: {},
+    })
+    assert.strictEqual(verifyRes.status, 302)
+    assert.strictEqual(verifyRes.headers.get('Location'), '/home')
+    assert.strictEqual(verifyRes.headers.get('Cache-Control'), 'private, no-store')
+
+    const newCookie = verifyRes.headers.get('Set-Cookie')
+    const newSessionId = newCookie.match(/session=([^;]+)/)[1]
+    assert.notStrictEqual(newSessionId, oldSessionId, 'session ID must be rotated on login')
+    assert.strictEqual(await kv.get(`session-${oldSessionId}`), null, 'old pre-auth session should be deleted')
+    assert.strictEqual(await kv.get(`email-token-${token}`), null, 'email token should be deleted after use')
+
+    const newSession = JSON.parse(await kv.get(`session-${newSessionId}`))
+    assert.strictEqual(newSession.userId, 'rotate@example.com')
+    assert.strictEqual(
+      newSession.challenge,
+      undefined,
+      'consumed challenge should not persist into authenticated session',
+    )
+
+    console.log('✔ Test 10 passed: emailVerify rotates session ID, deletes old session/token, and sets no-store')
+  }
+
+  // --- Test 11: sign-in component redirects passkey login to afterLoginHref and forwards afterLoginHref in emailStart ---
+  {
+    const fs = await import('node:fs/promises')
+    const signInSource = await fs.readFile(new URL('../public/components/sign-in.js', import.meta.url), 'utf8')
+    assert(
+      signInSource.includes("window.location.href = this.afterLoginHref || '/'"),
+      'sign-in.js should redirect passkey login to this.afterLoginHref || /',
+    )
+    assert(
+      signInSource.includes('body.afterLoginHref = this.afterLoginHref'),
+      'sign-in.js should forward explicit afterLoginHref in emailStart()',
+    )
+    console.log('✔ Test 11 passed: sign-in.js uses afterLoginHref for passkey redirect and emailStart')
+  }
+
   console.log('\nAll multi-passkey unit tests passed successfully!')
 }
 

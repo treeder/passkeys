@@ -1,10 +1,6 @@
 import { parse, serialize } from 'cookie-es'
-import { globals } from '../functions/globals.js'
 import { nanoid } from 'nanoid'
-import { hostname, cookieDomain } from './utils.js'
-
-// currently active session cache
-const sessions = {}
+import { cookieDomain } from './utils.js'
 
 export async function getSession(c) {
   const cookie = c.request.headers.get('cookie') || ''
@@ -16,10 +12,6 @@ export async function getSession(c) {
 export async function getSessionByID(c, sessionID) {
   if (!sessionID) {
     return {}
-    // throw new Error("session not found: no session cookie")
-  }
-  if (sessions[sessionID]) {
-    return sessions[sessionID]
   }
   let sessionData = await c.kv.get(`session-${sessionID}`)
   if (!sessionData) {
@@ -29,27 +21,25 @@ export async function getSessionByID(c, sessionID) {
   }
   sessionData = JSON.parse(sessionData)
   sessionData.id = sessionID
-  sessions[sessionID] = sessionData
   return sessionData
 }
 
 // this will overwrite the session
-export async function setSession(c, sessionData) {
+export async function setSession(c, sessionData, options = {}) {
   const cookie = c.request.headers.get('cookie') || ''
   let c2 = parse(cookie)
   let sessionID = c2.session
-  return await putSession(c, sessionID, sessionData)
+  return await putSession(c, sessionID, sessionData, options)
 }
 
 async function putSession(c, sessionID, sessionData, options = {}) {
   if (!sessionID) {
     sessionID = nanoid(40)
   }
-  sessionData.id = sessionID
+  const payload = { ...sessionData, id: sessionID }
   let maxAge = 60 * 60 * 24 * 365
   let k = `session-${sessionID}`
-  await c.kv.put(k, JSON.stringify(sessionData), { expirationTtl: maxAge })
-  sessions[sessionID] = sessionData
+  await c.kv.put(k, JSON.stringify(payload), { expirationTtl: maxAge })
   let cookies = [
     serialize('session', sessionID, {
       path: '/',
@@ -68,6 +58,14 @@ async function putSession(c, sessionID, sessionData, options = {}) {
 // this will merge sessionData with existing session
 export async function updateSession(c, sessionData, options = {}) {
   let session = await getSession(c)
+  const oldSessionID = session.id
   session = { ...session, ...sessionData }
-  return await putSession(c, session.id, session, options)
+  const targetSessionID = options.rotate ? null : session.id
+  const result = await putSession(c, targetSessionID, session, options)
+  if (options.rotate && oldSessionID && oldSessionID !== result.sessionID && typeof c.kv?.delete === 'function') {
+    try {
+      await c.kv.delete(`session-${oldSessionID}`)
+    } catch (e) {}
+  }
+  return result
 }
