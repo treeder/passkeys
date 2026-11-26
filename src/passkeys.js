@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
 import { cookieDomain, hostname, hostURL } from './utils.js'
-import { getSession, updateSession } from './sessions.js'
+import { getSession, setSession, updateSession } from './sessions.js'
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
@@ -110,9 +110,20 @@ export class Passkeys {
     let r = await this.opts.kv.get(`email-token-${token}`)
     if (!r) throw new APIError('auth token not found, please try signing in again', { status: 401 })
     let rr = JSON.parse(r)
+    if (typeof this.opts.kv.delete === 'function') {
+      try {
+        await this.opts.kv.delete(`email-token-${token}`)
+      } catch (e) {
+        this.opts.logger.log('Failed to delete email token:', e)
+      }
+    }
 
     // let user = await this.opts.getUserByEmail(rr.email)
-    let { cookies } = await updateSession(this.c2(c), rr, { domainLevels: this.opts.domainLevels })
+    let { cookies } = await setSession(
+      this.c2(c),
+      { userId: rr.userId, email: rr.email },
+      { domainLevels: this.opts.domainLevels, rotate: true },
+    )
 
     if (this.opts.emailVerified) {
       await this.opts.emailVerified({ email: rr.email, userId: rr.userId })
@@ -129,6 +140,7 @@ export class Passkeys {
       `${hostURL(c)}/signin`
     let headers = new Headers({
       Location: url,
+      'Cache-Control': 'private, no-store',
     })
     for (let cookie of cookies) {
       headers.append('Set-Cookie', cookie)
@@ -353,9 +365,10 @@ export class Passkeys {
     shallowCopy.counter = verification.authenticationInfo.newCounter
     await this.opts.kv.put(`passkeys-${shallowCopy.id}`, JSON.stringify(shallowCopy))
 
+    let user = null
     let userStr = await this.opts.kv.get(`users-${userId}`)
     if (userStr) {
-      let user = JSON.parse(userStr)
+      user = JSON.parse(userStr)
       if (Array.isArray(user.passkeys)) {
         let pk = user.passkeys.find((p) => p.id === shallowCopy.id)
         if (pk) {
@@ -365,19 +378,21 @@ export class Passkeys {
       }
     }
 
+    const email = user?.email ?? (sessionData.userId === userId ? sessionData.email : undefined)
     if (this.opts.passkeyVerified) {
-      await this.opts.passkeyVerified({ userId, email: sessionData.email })
+      await this.opts.passkeyVerified({ userId, email })
     }
 
-    let { cookies } = await updateSession(
-      this.c2(c),
-      {
-        userId: userId,
-      },
-      { domainLevels: this.opts.domainLevels },
-    )
+    const newSessionData = email ? { userId, email } : { userId }
+    let { cookies } = await setSession(this.c2(c), newSessionData, {
+      domainLevels: this.opts.domainLevels,
+      rotate: true,
+    })
 
-    let response = Response.json({ verified: verification.verified })
+    let response = Response.json(
+      { verified: verification.verified },
+      { headers: { 'Cache-Control': 'private, no-store' } },
+    )
     for (let cookie of cookies) {
       response.headers.append('Set-Cookie', cookie)
     }
