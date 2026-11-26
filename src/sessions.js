@@ -33,13 +33,21 @@ export async function setSession(c, sessionData, options = {}) {
 }
 
 async function putSession(c, sessionID, sessionData, options = {}) {
-  if (!sessionID) {
+  const oldSessionID = sessionID
+  if (options.rotate || !sessionID) {
     sessionID = nanoid(40)
   }
   const payload = { ...sessionData, id: sessionID }
   let maxAge = 60 * 60 * 24 * 365
   let k = `session-${sessionID}`
   await c.kv.put(k, JSON.stringify(payload), { expirationTtl: maxAge })
+  if (options.rotate && oldSessionID && oldSessionID !== sessionID && typeof c.kv?.delete === 'function') {
+    try {
+      await c.kv.delete(`session-${oldSessionID}`)
+    } catch (e) {
+      c.logger?.log?.('Failed to delete old session:', e)
+    }
+  }
   let cookies = [
     serialize('session', sessionID, {
       path: '/',
@@ -58,14 +66,6 @@ async function putSession(c, sessionID, sessionData, options = {}) {
 // this will merge sessionData with existing session
 export async function updateSession(c, sessionData, options = {}) {
   let session = await getSession(c)
-  const oldSessionID = session.id
   session = { ...session, ...sessionData }
-  const targetSessionID = options.rotate ? null : session.id
-  const result = await putSession(c, targetSessionID, session, options)
-  if (options.rotate && oldSessionID && oldSessionID !== result.sessionID && typeof c.kv?.delete === 'function') {
-    try {
-      await c.kv.delete(`session-${oldSessionID}`)
-    } catch (e) {}
-  }
-  return result
+  return await putSession(c, session.id, session, options)
 }

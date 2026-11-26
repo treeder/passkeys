@@ -327,6 +327,83 @@ async function runTests() {
     console.log('✔ Test 11 passed: sign-in.js uses afterLoginHref for passkey redirect and emailStart')
   }
 
+  // --- Test 12: setSession supports rotate and clears stale fields on account switch ---
+  {
+    const { getSession, setSession } = await import('../src/sessions.js')
+    const kv = new MockKV()
+    const oldSessionId = 'alice-sess-123'
+    await kv.put(
+      `session-${oldSessionId}`,
+      JSON.stringify({ id: oldSessionId, userId: 'alice', email: 'alice@example.com', staleField: 'old' }),
+    )
+
+    const req = new Request('http://localhost:8787/auth/passkeys/verify', {
+      headers: { cookie: `session=${oldSessionId}` },
+    })
+    const { sessionID: rotatedId } = await setSession(
+      { request: req, kv },
+      { userId: 'bob', email: 'bob@example.com' },
+      { rotate: true },
+    )
+    assert.notStrictEqual(rotatedId, oldSessionId, 'setSession with rotate should generate a new session ID')
+    assert.strictEqual(await kv.get(`session-${oldSessionId}`), null, 'rotate should delete old session')
+
+    const rotatedReq = new Request('http://localhost:8787/auth/check', {
+      headers: { cookie: `session=${rotatedId}` },
+    })
+    const rotatedSession = await getSession({ request: rotatedReq, kv })
+    assert.strictEqual(rotatedSession.userId, 'bob')
+    assert.strictEqual(rotatedSession.email, 'bob@example.com')
+    assert.strictEqual(rotatedSession.staleField, undefined, 'setSession should not inherit stale fields')
+
+    // Also verify emailVerify logs when email token deletion fails and does not leak prior session fields
+    const logged = []
+    const kvWithDeleteErr = new MockKV()
+    const origDelete = kvWithDeleteErr.delete.bind(kvWithDeleteErr)
+    kvWithDeleteErr.delete = async (key) => {
+      if (key.startsWith('email-token-')) {
+        throw new Error('kv delete failed')
+      }
+      return origDelete(key)
+    }
+    await kvWithDeleteErr.put(
+      'session-prev-user',
+      JSON.stringify({ id: 'prev-user', userId: 'alice', email: 'alice@example.com', staleField: 'leak' }),
+    )
+    const passkeys = new Passkeys({
+      kv: kvWithDeleteErr,
+      appName: 'TestApp',
+      baseURL: 'http://localhost:8787/auth',
+      logger: { log: (...args) => logged.push(args) },
+    })
+    const startRes = await passkeys.emailStart({
+      request: new Request('http://localhost:8787/auth/email/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'bob@example.com' }),
+      }),
+      data: {},
+    })
+    const { link } = await startRes.json()
+    const token = new URL(link).searchParams.get('token')
+    const verifyRes = await passkeys.emailVerify({
+      request: new Request(`http://localhost:8787/auth/email/verify?token=${token}`, {
+        headers: { cookie: 'session=prev-user' },
+      }),
+      data: {},
+    })
+    const newId = verifyRes.headers.get('Set-Cookie').match(/session=([^;]+)/)[1]
+    const bobSession = JSON.parse(await kvWithDeleteErr.get(`session-${newId}`))
+    assert.strictEqual(bobSession.userId, 'bob@example.com')
+    assert.strictEqual(bobSession.staleField, undefined, 'emailVerify should not inherit stale session fields')
+    assert(
+      logged.some((args) => String(args[0]).includes('Failed to delete email token')),
+      'emailVerify should log when email token deletion fails',
+    )
+
+    console.log('✔ Test 12 passed: setSession rotates cleanly and emailVerify logs delete errors')
+  }
+
   console.log('\nAll multi-passkey unit tests passed successfully!')
 }
 
